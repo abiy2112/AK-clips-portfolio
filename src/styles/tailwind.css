@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional animations plugin */
+@import 'tw-animate-css';
