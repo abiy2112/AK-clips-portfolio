@@ -23,141 +23,18 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  loadStoredReviews,
-  saveStoredReviews,
-  deleteStoredReview,
   getCreatorAuthStatus,
 } from "../utils/videoStorage";
+import {
+  subscribeToReviews,
+  saveReviewToCloud,
+  deleteReviewFromCloud,
+} from "../utils/cloudDB";
+import { ReviewItem } from "../types/review";
+import { INITIAL_REVIEWS } from "../data/initialReviews";
 
-export interface ReviewItem {
-  id: string;
-  name: string;
-  role: string;
-  companyOrHandle?: string;
-  avatarBg: string;
-  avatarText: string;
-  rating: number;
-  category: "TikTok & Reels" | "YouTube & Music" | "Real Estate & Promo" | "Other";
-  date: string;
-  comment: string;
-  verified: boolean;
-  verifiedMethod?: "telegram" | "email";
-  verifiedHandle?: string;
-  projectHighlight?: string;
-  likes: number;
-  isCustom?: boolean;
-}
-
-const INITIAL_REVIEWS: ReviewItem[] = [
-  {
-    id: "rev-1",
-    name: "Orbit Rise",
-    role: "TikTok Content Creator",
-    companyOrHandle: "@orbitrise",
-    avatarBg: "bg-slate-800 border-slate-700",
-    avatarText: "text-cyan-400",
-    rating: 4.8,
-    category: "TikTok & Reels",
-    date: "2 weeks ago",
-    comment:
-      "Abiy transformed our raw footage into high-retention viral TikTok clips! His pacing, caption animations, and sound effects brought our engagement to a whole new level. Super fast turnaround too!",
-    verified: true,
-    verifiedMethod: "telegram",
-    verifiedHandle: "@orbitrise",
-    projectHighlight: "Viral TikTok Series (1M+ views)",
-    likes: 6,
-  },
-  {
-    id: "rev-2",
-    name: "Blue Sky Properties",
-    role: "Marketing Director",
-    companyOrHandle: "Real Estate Agency",
-    avatarBg: "bg-slate-800 border-slate-700",
-    avatarText: "text-rose-400",
-    rating: 4.6,
-    category: "Real Estate & Promo",
-    date: "1 month ago",
-    comment:
-      "Working with Abiy on our luxury property promotional videos was seamless. He has an incredible eye for color grading, smooth cinematic transitions, and impactful script pacing. Highly recommended for commercial edits!",
-    verified: true,
-    verifiedMethod: "email",
-    verifiedHandle: "contact@blueskyprop.com",
-    projectHighlight: "Commercial Property Showcase",
-    likes: 5,
-  },
-  {
-    id: "rev-3",
-    name: "Abela G.",
-    role: "Influencer & Entertainer",
-    companyOrHandle: "@abela_.g",
-    avatarBg: "bg-slate-800 border-slate-700",
-    avatarText: "text-amber-400",
-    rating: 4.7,
-    category: "TikTok & Reels",
-    date: "1 month ago",
-    comment:
-      "Abiy knows exactly what makes social media video click. He catches the beat drops perfectly and keeps viewers hooked from the first 2 seconds. Best video editor I've worked with!",
-    verified: true,
-    verifiedMethod: "telegram",
-    verifiedHandle: "@abela_g",
-    projectHighlight: "Short Form Entertainment Series",
-    likes: 8,
-  },
-  {
-    id: "rev-4",
-    name: "Dagim Shumey",
-    role: "Digital Creator",
-    companyOrHandle: "@dagimshumey_",
-    avatarBg: "bg-slate-800 border-slate-700",
-    avatarText: "text-purple-400",
-    rating: 4.5,
-    category: "TikTok & Reels",
-    date: "2 months ago",
-    comment:
-      "Great communication, attention to details, and very creative visual rhythm. Whenever I hand over a script or raw video, Abiy always delivers beyond expectations.",
-    verified: true,
-    verifiedMethod: "telegram",
-    verifiedHandle: "@dagimshumey",
-    projectHighlight: "Lifestyle & Vlog Edits",
-    likes: 4,
-  },
-  {
-    id: "rev-5",
-    name: "MUSIKANA Community",
-    role: "Channel Co-Producer",
-    companyOrHandle: "YouTube (8K+ Subs)",
-    avatarBg: "bg-slate-800 border-slate-700",
-    avatarText: "text-red-400",
-    rating: 4.6,
-    category: "YouTube & Music",
-    date: "3 months ago",
-    comment:
-      "His work on the Amharic lyrics videos and motion typography is breathtaking. Every frame feels synchronized to the rhythm and emotion of the music. Pure artistic storytelling by Abiy!",
-    verified: true,
-    verifiedMethod: "telegram",
-    verifiedHandle: "@musikana1",
-    projectHighlight: "Cinematic Lyrics Video Stream",
-    likes: 9,
-  },
-  {
-    id: "rev-6",
-    name: "4 Kilo Gbi Gubae",
-    role: "Media Coordinator",
-    companyOrHandle: "Channel Production",
-    avatarBg: "bg-slate-800 border-slate-700",
-    avatarText: "text-emerald-400",
-    rating: 4.5,
-    category: "YouTube & Music",
-    date: "Recent",
-    comment:
-      "Outstanding color correction and script adaptation. Abiy manages multi-cam footage efficiently and delivers broadcast-ready videos right on schedule.",
-    verified: true,
-    verifiedMethod: "email",
-    verifiedHandle: "media@4kilogbi.org",
-    projectHighlight: "Documentary & Event Videos",
-    likes: 5,
-  },
-];
+// Re-export for backward compat if anything imports ReviewItem from here
+export type { ReviewItem };
 
 const CATEGORIES = [
   "All",
@@ -209,17 +86,17 @@ export default function ClientReviews() {
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Load reviews from IndexedDB + localStorage on mount
+  // Subscribe to reviews from Firestore on mount — updates all devices in real-time.
+  // If Firestore has no reviews yet (first ever load), the subscription auto-seeds
+  // INITIAL_REVIEWS via cloudDB.subscribeToReviews.
   useEffect(() => {
-    let isMounted = true;
-    loadStoredReviews<ReviewItem>(INITIAL_REVIEWS).then((loaded) => {
-      if (isMounted && loaded && loaded.length > 0) {
-        setReviews(loaded);
+    const unsubscribe = subscribeToReviews((cloudReviews) => {
+      if (cloudReviews.length > 0) {
+        setReviews(cloudReviews);
       }
+      // If still empty after seeding attempt, keep INITIAL_REVIEWS as fallback UI
     });
-    return () => {
-      isMounted = false;
-    };
+    return () => unsubscribe();
   }, []);
 
   // Sync likes with localStorage
@@ -271,7 +148,9 @@ export default function ClientReviews() {
       r.id === id ? { ...r, likes: isLiked ? Math.max(0, r.likes - 1) : r.likes + 1 } : r
     );
     setReviews(updated);
-    saveStoredReviews(updated);
+    // Persist like count to cloud for the specific review
+    const likedReview = updated.find((r) => r.id === id);
+    if (likedReview) saveReviewToCloud(likedReview).catch(console.error);
   };
 
   // Verification handler
@@ -352,11 +231,13 @@ export default function ClientReviews() {
         projectHighlight: formData.projectHighlight.trim() || undefined,
         likes: 1,
         isCustom: true,
+        createdAt: Date.now(),
       };
 
-      const updated = [newReview, ...reviews];
-      setReviews(updated);
-      saveStoredReviews(updated);
+      // Optimistic local update
+      setReviews((prev) => [newReview, ...prev]);
+      // Persist to Firestore — all devices see it immediately
+      saveReviewToCloud(newReview).catch(console.error);
 
       setIsSubmitting(false);
       setSubmittedSuccess(true);
@@ -407,10 +288,10 @@ export default function ClientReviews() {
 
   // Delete review handler
   const handleDeleteReview = (reviewId: string) => {
-    const updated = reviews.filter((r) => r.id !== reviewId);
-    setReviews(updated);
-    saveStoredReviews(updated);
-    deleteStoredReview(reviewId);
+    // Optimistic local removal
+    setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+    // Delete from Firestore — gone for all devices
+    deleteReviewFromCloud(reviewId).catch(console.error);
   };
 
   const filteredReviews =

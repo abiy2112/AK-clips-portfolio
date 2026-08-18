@@ -22,9 +22,9 @@ import {
   parseVideoSource,
   extractYouTubeId,
   extractGoogleDriveId,
-  storeVideoBlob,
   generateThumbnailFromVideoFile,
 } from "../utils/videoParser";
+import { uploadVideoToStorage } from "../utils/cloudDB";
 import AKLogo from "./AKLogo";
 
 interface VideoUploadModalProps {
@@ -67,10 +67,13 @@ export default function VideoUploadModal({
   const [duration, setDuration] = useState("");
   const [localFileName, setLocalFileName] = useState("");
   const [localFileObjectUrl, setLocalFileObjectUrl] = useState("");
-  const [localFileBlob, setLocalFileBlob] = useState<Blob | null>(null);
+  const [localFileBlob, setLocalFileBlob] = useState<File | null>(null);
   const [isCapturingThumbnail, setIsCapturingThumbnail] = useState(false);
   const [isSuccessMessage, setIsSuccessMessage] = useState(false);
   const [validationError, setValidationError] = useState("");
+  // Cloud upload progress (0-100, or null when idle)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
@@ -167,12 +170,32 @@ export default function VideoUploadModal({
       duration.trim() || undefined
     );
 
-    // If local file, save to IndexedDB
+    // For local file: upload to Firebase Storage and get a public cloud URL
     if (uploadMode === "file" && localFileBlob) {
-      await storeVideoBlob(newProject.id, localFileBlob);
-      newProject.type = "local";
-      newProject.videoUrl = localFileObjectUrl;
-      newProject.embedUrl = localFileObjectUrl;
+      setIsUploading(true);
+      setUploadProgress(0);
+      setValidationError("");
+      try {
+        const downloadURL = await uploadVideoToStorage(
+          newProject.id,
+          localFileBlob,
+          (pct) => setUploadProgress(pct)
+        );
+        // Replace the local blob URL with the permanent cloud URL
+        newProject.type = "direct";
+        newProject.videoUrl = downloadURL;
+        newProject.embedUrl = downloadURL;
+        newProject.sourceLabel = "Cloud Upload";
+      } catch {
+        setIsUploading(false);
+        setUploadProgress(null);
+        setValidationError(
+          "Video upload to cloud failed. Check your connection and try again."
+        );
+        return;
+      }
+      setIsUploading(false);
+      setUploadProgress(null);
     }
 
     onAddProject(newProject);
@@ -388,7 +411,7 @@ export default function VideoUploadModal({
                           {localFileName ? localFileName : "Tap to browse video file from device"}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-1">
-                          Stored permanently in local browser memory (IndexedDB)
+                          Uploaded securely to Firebase Cloud Storage
                         </div>
                       </>
                     )}
@@ -535,6 +558,26 @@ export default function VideoUploadModal({
                 </div>
               )}
 
+              {/* Cloud Upload Progress Bar */}
+              {isUploading && uploadProgress !== null && (
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-cyan-900/60 space-y-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-cyan-400 font-semibold flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Uploading to Firebase Cloud...
+                    </span>
+                    <span className="text-white font-bold">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-[#C8102E] rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-slate-400">Video will be accessible from any device once complete.</div>
+                </div>
+              )}
+
               {validationError && (
                 <div className="p-2.5 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 font-medium flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
@@ -554,16 +597,21 @@ export default function VideoUploadModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors cursor-pointer"
+                  disabled={isUploading}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-medium text-slate-300 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-xs font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                  disabled={isUploading}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                 >
-                  <Zap className="w-4 h-4 fill-current" />
-                  <span>Publish to Featured Projects</span>
+                  {isUploading ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /><span>Uploading to Cloud…</span></>
+                  ) : (
+                    <><Zap className="w-4 h-4 fill-current" /><span>Publish to Featured Projects</span></>
+                  )}
                 </button>
               </div>
             </form>

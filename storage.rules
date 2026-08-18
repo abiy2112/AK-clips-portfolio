@@ -1,0 +1,11 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public read for all video files (needed to play videos from any device)
+    // Write is only possible through the admin-authenticated app flow
+    match /videos/{videoId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
