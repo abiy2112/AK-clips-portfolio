@@ -23,12 +23,14 @@ import AKLogo from "./AKLogo";
 
 interface MacOSMenuBarProps {
   activeSection?: string;
-  onOpenUpload?: () => void;
+  onOpenAdmin?: () => void;
+  rating?: string;
 }
 
 export default function MacOSMenuBar({
   activeSection = "hero",
-  onOpenUpload,
+  onOpenAdmin,
+  rating = "4.6",
 }: MacOSMenuBarProps) {
   const [currentTime, setCurrentTime] = useState<string>("");
   const [currentDate, setCurrentDate] = useState<string>("");
@@ -59,19 +61,13 @@ export default function MacOSMenuBar({
 
   const spotlightItems = [
     {
-      title: "Upload Video / Creator Studio (Admin Only)",
-      category: "Studio Admin",
-      action: onOpenUpload,
-      icon: Zap,
-    },
-    {
       title: "AK clipps - Video Editor & Creative Storyteller",
       category: "Profile",
       href: "#hero",
       icon: Film,
     },
     {
-      title: "Featured Video Projects & Uploads",
+      title: "Featured Video Projects & Portfolio",
       category: "Portfolio",
       href: "#projects",
       icon: Play,
@@ -89,13 +85,13 @@ export default function MacOSMenuBar({
       icon: Sliders,
     },
     {
-      title: "Client Reviews (4.6 ⚡ Rating)",
+      title: "Client Reviews (4.6 Rating)",
       category: "Reviews",
       href: "#reviews",
       icon: Zap,
     },
     {
-      title: "Production Software & Toolkit (Official Logos)",
+      title: "Production Software & Toolkit",
       category: "Tools",
       href: "#software",
       icon: Sliders,
@@ -164,7 +160,7 @@ export default function MacOSMenuBar({
               >
                 Reviews
                 <span className="px-1 py-0.2 bg-[#C8102E] text-[9px] font-bold rounded text-white flex items-center gap-0.5">
-                  <span>4.6</span>
+                  <span>{rating}</span>
                   <Zap className="w-2.5 h-2.5 fill-current text-amber-300" />
                 </span>
               </a>
@@ -185,15 +181,14 @@ export default function MacOSMenuBar({
 
           {/* Right Status Controls & Mobile Hamburger */}
           <div className="flex items-center gap-1.5 sm:gap-2 text-slate-400">
-            {/* Quick Upload Button (Touch-optimized on mobile) */}
-            {onOpenUpload && (
+            {/* Discreet Lightning Icon for Admin Panel */}
+            {onOpenAdmin && (
               <button
-                onClick={onOpenUpload}
-                className="flex items-center gap-1 px-2.5 py-1 sm:py-0.5 rounded bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] hover:to-[#b00e27] text-white text-[10px] font-bold shadow-sm transition-all cursor-pointer border border-red-500/40"
-                title="Upload / Add Video (Admin Only)"
+                onClick={onOpenAdmin}
+                className="p-1.5 sm:p-1 rounded hover:bg-slate-800 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center justify-center"
+                aria-label="Studio Access"
               >
-                <Zap className="w-3 h-3 fill-current text-amber-300" />
-                <span>Upload</span>
+                <Zap className="w-3.5 h-3.5 fill-current" />
               </button>
             )}
 
@@ -203,7 +198,7 @@ export default function MacOSMenuBar({
               className="flex items-center gap-1 px-1.5 py-1 sm:py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-200 hover:text-white transition-colors"
             >
               <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span className="font-semibold text-white">4.6</span>
+              <span className="font-semibold text-white">{rating}</span>
             </a>
 
             {/* Spotlight Search button */}
@@ -279,40 +274,37 @@ export default function MacOSMenuBar({
                   <div className="text-[10px] text-slate-400">Abiy Ketema • Video Editor</div>
                 </div>
               </div>
-              <button
-                onClick={() => setShowMobileMenu(false)}
-                className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {onOpenAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      onOpenAdmin();
+                    }}
+                    className="p-1.5 rounded-full bg-slate-800 text-amber-400 hover:text-amber-300"
+                    title="Studio"
+                  >
+                    <Zap className="w-4 h-4 fill-current" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-2 gap-2">
-              {onOpenUpload && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    onOpenUpload();
-                  }}
-                  className="col-span-2 p-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-red-700 text-white flex items-center justify-between font-bold text-xs shadow-md border border-red-500/40"
-                >
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 fill-current text-amber-300" />
-                    <span>Upload Video / Creator Studio</span>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-black/40 rounded">Admin</span>
-                </button>
-              )}
-
               <a
                 href="#projects"
                 onClick={() => setShowMobileMenu(false)}
                 className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
               >
                 <Film className="w-4 h-4 text-cyan-400" />
-                <span>Projects ({projects.length || "Featured"})</span>
+                <span>Featured Projects</span>
               </a>
 
               <a
@@ -321,7 +313,7 @@ export default function MacOSMenuBar({
                 className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
               >
                 <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span>Reviews (4.6★)</span>
+                <span>Reviews ({rating}★)</span>
               </a>
 
               <a
@@ -408,30 +400,6 @@ export default function MacOSMenuBar({
           </div>
 
           <div className="space-y-2">
-            {/* Creator Upload Action */}
-            {onOpenUpload && (
-              <button
-                onClick={() => {
-                  setShowControlCenter(false);
-                  onOpenUpload();
-                }}
-                className="w-full p-2 rounded-lg bg-gradient-to-r from-[#C8102E]/20 to-red-950/40 border border-[#C8102E]/40 hover:border-[#C8102E] text-white flex items-center justify-between text-xs font-semibold transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-md bg-[#C8102E] text-white">
-                    <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
-                  </div>
-                  <div className="text-left">
-                    <div>Upload / Add Video</div>
-                    <div className="text-[10px] text-slate-400 font-normal">
-                      Admin Only
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-[#ff4b67]">Open →</span>
-              </button>
-            )}
-
             {/* Quick Status Cards */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 flex items-center gap-2">
@@ -446,7 +414,7 @@ export default function MacOSMenuBar({
                 <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
                 <div>
                   <div className="text-[10px] font-semibold text-white">Rating</div>
-                  <div className="text-[9px] text-amber-400 font-bold">4.6 ⚡ / 5.0</div>
+                  <div className="text-[9px] text-amber-400 font-bold">{rating} ⚡ / 5.0</div>
                 </div>
               </div>
             </div>

@@ -30,9 +30,11 @@ import FeaturedProjectsMarquee from "./components/FeaturedProjectsMarquee";
 import SoftwareMarquee from "./components/SoftwareMarquee";
 import AKLogo from "./components/AKLogo";
 import AdminAuthModal from "./components/AdminAuthModal";
-import VideoUploadModal from "./components/VideoUploadModal";
+import AdminPanel from "./components/AdminPanel";
 import VideoPlayerModal from "./components/VideoPlayerModal";
 import { ProjectItem } from "./types/project";
+import { ReviewItem } from "./types/review";
+import { SiteContactSettings, SiteContentSettings } from "./types/settings";
 import {
   getCreatorAuthStatus,
   setCreatorAuthStatus,
@@ -41,7 +43,15 @@ import {
   subscribeToProjects,
   saveProjectToCloud,
   deleteProjectFromCloud,
+  subscribeToReviews,
 } from "./utils/cloudDB";
+import {
+  subscribeToContactSettings,
+  subscribeToContentSettings,
+  DEFAULT_CONTACT_SETTINGS,
+  DEFAULT_CONTENT_SETTINGS,
+} from "./utils/siteSettings";
+import { INITIAL_REVIEWS } from "./data/initialReviews";
 
 const DEFAULT_PROJECTS: ProjectItem[] = [
   {
@@ -85,13 +95,20 @@ export default function App() {
   const [customProjects, setCustomProjects] = useState<ProjectItem[]>([]);
   const projects = [...customProjects, ...DEFAULT_PROJECTS];
 
+  // Reviews from Cloud Firestore
+  const [reviews, setReviews] = useState<ReviewItem[]>(INITIAL_REVIEWS);
+
+  // Contact & Written Content settings from Cloud Firestore
+  const [contactSettings, setContactSettings] = useState<SiteContactSettings>(DEFAULT_CONTACT_SETTINGS);
+  const [contentSettings, setContentSettings] = useState<SiteContentSettings>(DEFAULT_CONTENT_SETTINGS);
+
   // Modal & Auth states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [activeVideoModalProject, setActiveVideoModalProject] = useState<ProjectItem | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getCreatorAuthStatus());
 
-  // Subscribe to custom projects from Firestore — updates all devices in real-time
+  // Subscribe to custom projects from Firestore
   useEffect(() => {
     const unsubscribe = subscribeToProjects((cloudProjects) => {
       setCustomProjects(cloudProjects);
@@ -99,8 +116,32 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Subscribe to client reviews from Firestore
   useEffect(() => {
-    // Intersection Observer for clean fade-in
+    const unsubscribe = subscribeToReviews((cloudReviews) => {
+      if (cloudReviews.length > 0) {
+        setReviews(cloudReviews);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to contact and content settings from Firestore
+  useEffect(() => {
+    const unsubContact = subscribeToContactSettings((settings) => {
+      setContactSettings(settings);
+    });
+    const unsubContent = subscribeToContentSettings((settings) => {
+      setContentSettings(settings);
+    });
+    return () => {
+      unsubContact();
+      unsubContent();
+    };
+  }, []);
+
+  // Intersection Observer for clean fade-in animations
+  useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -119,12 +160,12 @@ export default function App() {
     return () => {
       observerRef.current?.disconnect();
     };
-  }, [projects]);
+  }, [projects, reviews, contentSettings]);
 
-  // Auth & Project management handlers
-  const handleOpenUpload = () => {
+  // Admin access handler (triggered by top lightning icon)
+  const handleOpenAdmin = () => {
     if (isAuthenticated) {
-      setIsUploadModalOpen(true);
+      setIsAdminPanelOpen(true);
     } else {
       setIsAuthModalOpen(true);
     }
@@ -134,36 +175,31 @@ export default function App() {
     setIsAuthenticated(true);
     setCreatorAuthStatus(true);
     setIsAuthModalOpen(false);
-    setIsUploadModalOpen(true);
-  };
-
-  const handleAddProject = (newProject: ProjectItem) => {
-    // Optimistic local update so the UI responds immediately
-    setCustomProjects((prev) => [
-      newProject,
-      ...prev.filter((p) => p.id !== newProject.id),
-    ]);
-    // Persist to Firestore — all other devices will receive via their subscription
-    saveProjectToCloud(newProject).catch(console.error);
-  };
-
-  const handleDeleteProject = (projectId: string) => {
-    // Optimistic local removal
-    setCustomProjects((prev) => prev.filter((p) => p.id !== projectId));
-    // Delete from Firestore (also removes Storage file if applicable)
-    deleteProjectFromCloud(projectId).catch(console.error);
-  };
-
-  const handleResetProjects = () => {
-    // Delete all custom projects from Firestore
-    customProjects.forEach((p) => deleteProjectFromCloud(p.id).catch(console.error));
-    setCustomProjects([]);
+    setIsAdminPanelOpen(true);
   };
 
   const handleLockSession = () => {
     setIsAuthenticated(false);
     setCreatorAuthStatus(false);
-    setIsUploadModalOpen(false);
+    setIsAdminPanelOpen(false);
+  };
+
+  const handleAddProject = (newProject: ProjectItem) => {
+    setCustomProjects((prev) => [
+      newProject,
+      ...prev.filter((p) => p.id !== newProject.id),
+    ]);
+    saveProjectToCloud(newProject).catch(console.error);
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setCustomProjects((prev) => prev.filter((p) => p.id !== projectId));
+    deleteProjectFromCloud(projectId).catch(console.error);
+  };
+
+  const handleResetProjects = () => {
+    customProjects.forEach((p) => deleteProjectFromCloud(p.id).catch(console.error));
+    setCustomProjects([]);
   };
 
   const skills = [
@@ -201,7 +237,7 @@ export default function App() {
     {
       title: "Lead Video Editor & Producer",
       company: "MUSIKANA (YouTube Channel)",
-      companyUrl: "https://youtube.com/@musikana1?si=YM0bpGXPvAAbcyKw",
+      companyUrl: contactSettings.youtubeChannelUrl || "https://youtube.com/@musikana1?si=YM0bpGXPvAAbcyKw",
       location: "Addis Ababa",
       period: "Jul 2023 - Present",
       subscribers: "8,000+ Subscribers",
@@ -211,7 +247,7 @@ export default function App() {
         "Managed publishing cadence resulting in thousands of recurring organic views.",
       ],
       thumbnail: imagechan,
-      videoUrl: "https://youtube.com/@musikana1",
+      videoUrl: contactSettings.youtubeChannelUrl || "https://youtube.com/@musikana1",
       tag: "YouTube",
     },
     {
@@ -267,14 +303,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#090D16] text-slate-100 font-sans selection:bg-[#C8102E]/30 selection:text-white relative overflow-x-hidden pb-24">
-      {/* macOS Clean Top Menu Bar */}
-      <MacOSMenuBar onOpenUpload={handleOpenUpload} />
+      {/* macOS Clean Top Menu Bar with Discreet Lightning Icon for Admin Access */}
+      <MacOSMenuBar
+        onOpenAdmin={handleOpenAdmin}
+        rating={contentSettings.rating}
+      />
 
       {/* Hero Section: Clean macOS Welcoming Screen */}
       <header id="hero" className="relative pt-14 sm:pt-16 pb-8 px-4 max-w-5xl mx-auto z-10">
         <MacOSWindow
-          title="AK clipps Studio"
-          subtitle="Abiy Ketema"
+          title={`${contentSettings.name} Studio`}
+          subtitle={contentSettings.fullName}
           icon={<Film className="w-3.5 h-3.5 text-slate-300" />}
           headerRight={
             <div className="flex items-center gap-2">
@@ -287,7 +326,7 @@ export default function App() {
                 className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 text-amber-400 text-[10px] font-semibold hover:bg-slate-700 transition-colors"
               >
                 <Zap className="w-3 h-3 fill-amber-400" />
-                <span>4.6</span>
+                <span>{contentSettings.rating}</span>
               </a>
             </div>
           }
@@ -298,32 +337,32 @@ export default function App() {
             <div className="md:col-span-8 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-medium">
                 <AKLogo size={16} rounded="xl" />
-                <span>Video Editor & Motion Designer</span>
+                <span>{contentSettings.badgeText}</span>
               </div>
 
               <div>
                 <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-tight">
-                  AK clipps
+                  {contentSettings.name}
                 </h1>
                 <div className="text-base sm:text-lg text-slate-400 font-normal mt-1">
-                  Abiy Ketema • Crafting high-retention visual stories
+                  {contentSettings.fullName} • {contentSettings.tagline}
                 </div>
               </div>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
-                Specializing in viral short-form TikTok/Reels, YouTube long-form content, luxury commercial property showcases, and rhythmic motion graphics.
+                {contentSettings.heroDescription}
               </p>
 
               {/* CTAs */}
               <div className="flex flex-wrap gap-3 pt-1">
                 <a
-                  href="https://t.me/Ak_clips"
+                  href={contactSettings.telegramUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="px-5 py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Telegram (@Ak_clips)</span>
+                  <span>Telegram (@{contactSettings.telegramUsername})</span>
                 </a>
 
                 <a
@@ -333,36 +372,27 @@ export default function App() {
                   <Play className="w-3.5 h-3.5 text-slate-300 fill-slate-300" />
                   <span>Explore Projects</span>
                 </a>
-
-                <button
-                  type="button"
-                  onClick={handleOpenUpload}
-                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 font-medium rounded-lg border border-slate-700 hover:border-cyan-500/40 transition-colors flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer"
-                >
-                  <Zap className="w-3.5 h-3.5 fill-current text-amber-400" />
-                  <span>Studio Upload (Admin Only)</span>
-                </button>
               </div>
 
               {/* Quick Contacts */}
               <div className="flex flex-wrap gap-2 pt-1 text-xs text-slate-400">
                 <a
-                  href="mailto:abiyketema21@gmail.com"
+                  href={`mailto:${contactSettings.email}`}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 hover:text-white transition-colors"
                 >
                   <Mail className="w-3 h-3 text-cyan-400" />
-                  <span>abiyketema21@gmail.com</span>
+                  <span>{contactSettings.email}</span>
                 </a>
                 <a
-                  href="tel:+251934681880"
+                  href={`tel:${contactSettings.phone.replace(/[^0-9+]/g, "")}`}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 hover:text-white transition-colors"
                 >
                   <Phone className="w-3 h-3 text-emerald-400" />
-                  <span>+251-934681880</span>
+                  <span>{contactSettings.phone}</span>
                 </a>
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400">
                   <MapPin className="w-3 h-3 text-red-400" />
-                  <span>Addis Ababa, Ethiopia</span>
+                  <span>{contactSettings.location}</span>
                 </div>
               </div>
             </div>
@@ -374,31 +404,31 @@ export default function App() {
                   <AKLogo size={105} rounded="2xl" />
                   <div className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 bg-slate-950 border border-slate-800 rounded-full flex items-center gap-1 text-[10px] font-bold text-amber-400">
                     <Zap className="w-2.5 h-2.5 fill-amber-400" />
-                    <span>4.6</span>
+                    <span>{contentSettings.rating}</span>
                   </div>
                 </div>
 
                 <div className="text-base font-bold text-white flex items-center gap-1.5">
-                  <span>AK clipps</span>
+                  <span>{contentSettings.name}</span>
                   <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
                 </div>
-                <div className="text-xs text-slate-400 mb-3">Abiy Ketema</div>
+                <div className="text-xs text-slate-400 mb-3">{contentSettings.fullName}</div>
 
                 {/* Profile Stats */}
                 <div className="w-full grid grid-cols-3 gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800/80 text-center">
                   <div>
                     <div className="text-xs font-bold text-white flex items-center justify-center gap-0.5">
-                      <span>4.6</span>
+                      <span>{contentSettings.rating}</span>
                       <Zap className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                     </div>
                     <div className="text-[9px] text-slate-400">Rating</div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">3+ Yrs</div>
+                    <div className="text-xs font-bold text-white">{contentSettings.experienceYears}</div>
                     <div className="text-[9px] text-slate-400">Experience</div>
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">5M+</div>
+                    <div className="text-xs font-bold text-white">{contentSettings.totalViews}</div>
                     <div className="text-[9px] text-slate-400">Views</div>
                   </div>
                 </div>
@@ -420,46 +450,28 @@ export default function App() {
         </MacOSWindow>
       </header>
 
-      {/* Featured Projects: Smaller Infinite Scrolling Ticker (Slow on Hover & Scrollable) */}
+      {/* Featured Projects Section */}
       <section id="projects" className="py-12 px-4 max-w-5xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
-                <Play className="w-4 h-4 fill-slate-200" />
-              </div>
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                  Featured <span className="text-cyan-400">Projects</span>
-                </h2>
-                <p className="text-slate-400 text-xs mt-0.5">
-                  Continuous ticker • Hover to inspect or click to watch
-                </p>
-              </div>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
+              <Play className="w-4 h-4 fill-slate-200" />
             </div>
-
-            {/* Creator Studio Upload Button (Admin Only) */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleOpenUpload}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] hover:to-[#b00e27] text-white text-xs font-bold shadow-lg shadow-red-950/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-red-500/30"
-              >
-                <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
-                <span>Upload Video</span>
-                <span className="px-1.5 py-0.2 bg-black/40 rounded text-[10px] text-red-200 font-medium">
-                  Admin Only
-                </span>
-              </button>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                Featured <span className="text-cyan-400">Projects</span>
+              </h2>
+              <p className="text-slate-400 text-xs mt-0.5">
+                Continuous ticker • Hover to inspect or click to watch
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Infinite auto-scroll marquee component with dual view + uploads highlight */}
+        {/* Infinite auto-scroll marquee component */}
         <FeaturedProjectsMarquee
           projects={projects}
           onSelectProject={(p) => setActiveVideoModalProject(p)}
-          onOpenUpload={handleOpenUpload}
           onDeleteProject={handleDeleteProject}
         />
       </section>
@@ -468,7 +480,7 @@ export default function App() {
       <section className="py-12 px-4 max-w-5xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
           <MacOSWindow
-            title="Inspector — About Abiy Ketema"
+            title={`Inspector — About ${contentSettings.fullName}`}
             icon={<Award className="w-3.5 h-3.5 text-red-400" />}
           >
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
@@ -477,13 +489,13 @@ export default function App() {
               </div>
               <div className="md:col-span-9 space-y-2.5">
                 <h2 className="text-xl sm:text-2xl font-bold text-white">
-                  About <span className="text-cyan-400">Abiy Ketema (AK clipps)</span>
+                  About <span className="text-cyan-400">{contentSettings.fullName} ({contentSettings.name})</span>
                 </h2>
                 <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                  Detail-oriented Video Editor with <span className="text-white font-medium">3+ years</span> of experience producing video content across social media, corporate, and entertainment channels. Skilled in visual pacing, motion typography, and audio mastering.
+                  {contentSettings.aboutDescription1}
                 </p>
                 <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                  Founder & producer of the <span className="text-white font-medium">MUSIKANA</span> YouTube channel with over <span className="text-cyan-400 font-semibold">8,000+ subscribers</span>, delivering synchronized motion lyrics streams and creative video cuts with over <span className="text-white font-medium">5M+</span> overall reach.
+                  {contentSettings.aboutDescription2}
                 </p>
               </div>
             </div>
@@ -644,7 +656,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Client Reviews Section (Abiy, 4.6 Rated, 5M+ Views, Realistic Likes) */}
+      {/* Client Reviews Section (Abiy, Rating, 5M+ Views, Realtime Reviews) */}
       <ClientReviews />
 
       {/* Education */}
@@ -673,7 +685,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Production Software & Creative Toolkit Marquee (Official Suite) */}
+      {/* Production Software & Creative Toolkit Marquee */}
       <div id="software">
         <SoftwareMarquee />
       </div>
@@ -688,26 +700,28 @@ export default function App() {
             </div>
 
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
-              Get in Touch with <span className="text-cyan-400">AK clipps</span>
+              {contentSettings.contactSectionTitle}
             </h2>
 
             <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto mb-8">
-              Available for YouTube video editing, TikTok/Reels retainers, and promotional campaigns.
+              {contentSettings.contactSectionSubtitle}
             </p>
           </div>
 
           {/* Avatar */}
           <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-200 mb-8">
             <AKLogo size={90} rounded="2xl" />
-            <div className="mt-2 font-bold text-white text-sm">AK clipps (Abiy Ketema)</div>
-            <div className="text-[11px] text-slate-400">Addis Ababa, Ethiopia</div>
+            <div className="mt-2 font-bold text-white text-sm">
+              {contentSettings.name} ({contentSettings.fullName})
+            </div>
+            <div className="text-[11px] text-slate-400">{contactSettings.location}</div>
           </div>
 
           {/* Action Buttons */}
           <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-400 w-full max-w-lg">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <a
-                href="https://t.me/Ak_clips"
+                href={contactSettings.telegramUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="py-3 px-4 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
@@ -717,7 +731,7 @@ export default function App() {
               </a>
 
               <a
-                href="mailto:abiyketema21@gmail.com"
+                href={`mailto:${contactSettings.email}`}
                 className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5 text-cyan-400" />
@@ -725,7 +739,7 @@ export default function App() {
               </a>
 
               <a
-                href="https://www.linkedin.com/in/abiy-ketema-2a8902290"
+                href={contactSettings.linkedinUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
@@ -743,37 +757,40 @@ export default function App() {
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <AKLogo size={16} rounded="lg" />
-            <span className="font-semibold text-slate-300">AK clipps</span>
-            <span>— Abiy Ketema</span>
+            <span className="font-semibold text-slate-300">{contentSettings.name}</span>
+            <span>— {contentSettings.fullName}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span>© {new Date().getFullYear()} AK clipps. All rights reserved. • 4.6</span>
+            <span>© {new Date().getFullYear()} {contentSettings.name}. All rights reserved. • {contentSettings.rating}</span>
             <Zap className="w-3 h-3 fill-amber-400 text-amber-400" />
             <span>Rated</span>
           </div>
         </div>
       </footer>
 
-      {/* Security Gatekeeper Authorization Modal (Admin Only) */}
+      {/* Security Gatekeeper Authorization Modal (Passcode 5252) */}
       <AdminAuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={handleAuthSuccess}
       />
 
-      {/* Creator Video Upload & Project Manager Studio Modal */}
-      <VideoUploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+      {/* Universal Studio Admin Panel (Uploads, Reviews, Contact, Content) */}
+      <AdminPanel
+        isOpen={isAdminPanelOpen}
+        onClose={() => setIsAdminPanelOpen(false)}
         projects={projects}
+        reviews={reviews}
+        contactSettings={contactSettings}
+        contentSettings={contentSettings}
         onAddProject={handleAddProject}
         onDeleteProject={handleDeleteProject}
         onResetProjects={handleResetProjects}
         onLockSession={handleLockSession}
       />
 
-      {/* High-End Cinema Video Player Modal */}
+      {/* Cinema Video Player Modal */}
       <VideoPlayerModal
         project={activeVideoModalProject}
         onClose={() => setActiveVideoModalProject(null)}

@@ -111,10 +111,10 @@ export default function AdminAuthModal({
           </div>
 
           <h3 className="text-base font-bold text-white mb-1">
-            AK clipps Admin Authorization
+            AK clipps Studio Authorization
           </h3>
           <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-            Please enter your admin passcode to unlock the Video Upload Studio.
+            Please enter your passcode to access the Studio Admin Panel.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
