@@ -12,7 +12,6 @@ import {
   Linkedin,
   Send,
   Sparkles,
-  Star,
   ArrowRight,
   Film,
   Layers,
@@ -29,6 +28,7 @@ import MacOSDock from "./components/MacOSDock";
 import MacOSWindow from "./components/MacOSWindow";
 import VideoStudioTimeline from "./components/VideoStudioTimeline";
 import FeaturedProjectsMarquee from "./components/FeaturedProjectsMarquee";
+import SoftwareMarquee from "./components/SoftwareMarquee";
 import AKLogo from "./components/AKLogo";
 import AdminAuthModal from "./components/AdminAuthModal";
 import VideoUploadModal from "./components/VideoUploadModal";
@@ -263,7 +263,7 @@ export default function App() {
       <MacOSMenuBar onOpenUpload={handleOpenUpload} />
 
       {/* Hero Section: Clean macOS Welcoming Screen */}
-      <header id="hero" className="relative pt-14 sm:pt-16 pb-12 px-4 max-w-5xl mx-auto z-10">
+      <header id="hero" className="relative pt-14 sm:pt-16 pb-8 px-4 max-w-5xl mx-auto z-10">
         <MacOSWindow
           title="AK clipps Studio"
           subtitle="Abiy Ketema"
@@ -278,8 +278,8 @@ export default function App() {
                 href="#reviews"
                 className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 text-amber-400 text-[10px] font-semibold hover:bg-slate-700 transition-colors"
               >
-                <Star className="w-3 h-3 fill-amber-400" />
-                <span>4.6★</span>
+                <Zap className="w-3 h-3 fill-amber-400" />
+                <span>4.6</span>
               </a>
             </div>
           }
@@ -331,8 +331,8 @@ export default function App() {
                   onClick={handleOpenUpload}
                   className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 font-medium rounded-lg border border-slate-700 hover:border-cyan-500/40 transition-colors flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                  <span>⚡ Studio Upload (5252)</span>
+                  <Zap className="w-3.5 h-3.5 fill-current text-amber-400" />
+                  <span>Studio Upload (Admin Only)</span>
                 </button>
               </div>
 
@@ -365,7 +365,7 @@ export default function App() {
                 <div className="relative mb-3">
                   <AKLogo size={105} rounded="2xl" />
                   <div className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 bg-slate-950 border border-slate-800 rounded-full flex items-center gap-1 text-[10px] font-bold text-amber-400">
-                    <Star className="w-2.5 h-2.5 fill-amber-400" />
+                    <Zap className="w-2.5 h-2.5 fill-amber-400" />
                     <span>4.6</span>
                   </div>
                 </div>
@@ -379,7 +379,10 @@ export default function App() {
                 {/* Profile Stats */}
                 <div className="w-full grid grid-cols-3 gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800/80 text-center">
                   <div>
-                    <div className="text-xs font-bold text-white">4.6★</div>
+                    <div className="text-xs font-bold text-white flex items-center justify-center gap-0.5">
+                      <span>4.6</span>
+                      <Zap className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                    </div>
                     <div className="text-[9px] text-slate-400">Rating</div>
                   </div>
                   <div>
@@ -409,8 +412,13 @@ export default function App() {
         </MacOSWindow>
       </header>
 
+      {/* Moving Software Toolkit Marquee (Premiere Pro, After Effects, Media Encoder, CapCut, Figma, Photoshop, Illustrator) */}
+      <div id="software">
+        <SoftwareMarquee />
+      </div>
+
       {/* Featured Projects: Smaller Infinite Scrolling Ticker (Slow on Hover & Scrollable) */}
-      <section id="projects" className="py-14 px-4 max-w-5xl mx-auto relative z-10">
+      <section id="projects" className="py-12 px-4 max-w-5xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -427,17 +435,17 @@ export default function App() {
               </div>
             </div>
 
-            {/* Creator Studio Upload Button with 5252 Passcode */}
+            {/* Creator Studio Upload Button (Admin Only) */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleOpenUpload}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] hover:to-[#b00e27] text-white text-xs font-bold shadow-lg shadow-red-950/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-red-500/30"
               >
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>⚡ Upload / Add Video</span>
-                <span className="px-1.5 py-0.2 bg-black/40 rounded text-[10px] text-red-200 font-mono">
-                  5252
+                <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
+                <span>Upload Video</span>
+                <span className="px-1.5 py-0.2 bg-black/40 rounded text-[10px] text-red-200 font-medium">
+                  Admin Only
                 </span>
               </button>
             </div>
@@ -730,8 +738,10 @@ export default function App() {
             <span>— Abiy Ketema</span>
           </div>
 
-          <div>
-            © {new Date().getFullYear()} AK clipps. All rights reserved. • 4.6★ Rated
+          <div className="flex items-center gap-1">
+            <span>© {new Date().getFullYear()} AK clipps. All rights reserved. • 4.6</span>
+            <Zap className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span>Rated</span>
           </div>
         </div>
       </footer>
@@ -739,7 +749,7 @@ export default function App() {
       {/* Floating macOS Dock */}
       <MacOSDock onOpenUpload={handleOpenUpload} />
 
-      {/* Security Gatekeeper Authorization Modal (Passcode: 5252) */}
+      {/* Security Gatekeeper Authorization Modal (Admin Only) */}
       <AdminAuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

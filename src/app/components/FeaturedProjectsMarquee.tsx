@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Play, ExternalLink, Film, Zap, Plus, Sparkles } from "lucide-react";
+import { Play, ExternalLink, Film, Zap } from "lucide-react";
 import { ProjectItem } from "../types/project";
 
 interface FeaturedProjectsMarqueeProps {
@@ -102,7 +102,7 @@ export default function FeaturedProjectsMarquee({
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
         className="flex gap-4 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing px-4 sm:px-6 py-2"
-        style={{ scrollBehavior: isDragging ? "auto" : "auto" }}
+        style={{ scrollBehavior: "auto" }}
       >
         {displayProjects.map((p, idx) => {
           const thumb = getThumbnailSrc(p);
@@ -188,7 +188,7 @@ export default function FeaturedProjectsMarquee({
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-cyan-400 hover:text-white text-xs font-medium transition-colors cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
-            <span>⚡ Upload Video (Passcode: 5252)</span>
+            <span>Upload Video (Admin Only)</span>
           </button>
         )}
       </div>

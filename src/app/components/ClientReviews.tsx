@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   MessageSquareQuote,
-  Star,
+  Zap,
   ThumbsUp,
   Sparkles,
   CheckCircle2,
@@ -337,11 +337,12 @@ export default function ClientReviews() {
             {/* 4.6 Overall Rating Card */}
             <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60">
               <div className="p-2.5 rounded-xl bg-slate-800 text-amber-400">
-                <Star className="w-5 h-5 fill-amber-400" />
+                <Zap className="w-5 h-5 fill-amber-400" />
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-bold text-white flex items-center gap-1">
                   {officialRating}
+                  <span className="text-xs text-amber-400 font-bold">⚡</span>
                   <span className="text-xs text-slate-400 font-normal">/ 5.0</span>
                 </div>
                 <div className="text-[11px] text-slate-400">Average Rating</div>
@@ -486,23 +487,23 @@ export default function ClientReviews() {
 
                     <div>
                       <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                        Rating Score: <span className="text-amber-400 font-semibold">{formData.rating} Stars</span>
+                        Rating Score: <span className="text-amber-400 font-semibold">{formData.rating} ⚡</span>
                       </label>
                       <div className="flex items-center gap-1.5 pt-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
+                        {[1, 2, 3, 4, 5].map((lvl) => (
                           <button
-                            key={star}
+                            key={lvl}
                             type="button"
-                            onClick={() => setFormData({ ...formData, rating: star })}
-                            onMouseEnter={() => setHoverRating(star)}
+                            onClick={() => setFormData({ ...formData, rating: lvl })}
+                            onMouseEnter={() => setHoverRating(lvl)}
                             onMouseLeave={() => setHoverRating(null)}
                             className="p-1 text-slate-600 hover:text-amber-400 transition-colors cursor-pointer"
                           >
-                            <Star
+                            <Zap
                               className={`w-5 h-5 ${
                                 (hoverRating !== null
-                                  ? star <= hoverRating
-                                  : star <= formData.rating)
+                                  ? lvl <= hoverRating
+                                  : lvl <= formData.rating)
                                   ? "text-amber-400 fill-amber-400"
                                   : "text-slate-700"
                               }`}
@@ -577,7 +578,7 @@ export default function ClientReviews() {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star
+                        <Zap
                           key={i}
                           className={`w-3.5 h-3.5 ${
                             i < Math.floor(item.rating)

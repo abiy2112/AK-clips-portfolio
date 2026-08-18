@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import {
   Film,
   Briefcase,
-  Star,
   Layers,
   Mail,
   Send,
   Youtube,
   Music,
   Zap,
+  Sliders,
 } from "lucide-react";
 import AKLogo from "./AKLogo";
 
@@ -46,12 +46,19 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
       color: "text-slate-200",
     },
     {
+      id: "software",
+      label: "Creative Toolkit (Premiere, AE, CapCut)",
+      href: "#software",
+      icon: Sliders,
+      color: "text-slate-200",
+    },
+    {
       id: "upload",
-      label: "⚡ Studio Upload (5252)",
+      label: "Studio Upload (Admin Only)",
       onClick: onOpenUpload,
       icon: Zap,
-      badge: "5252",
-      color: "text-red-400",
+      badge: "Admin",
+      color: "text-amber-400",
     },
     {
       id: "work",
@@ -69,9 +76,9 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
     },
     {
       id: "reviews",
-      label: "Reviews (4.6★)",
+      label: "Reviews (4.6 ⚡)",
       href: "#reviews",
-      icon: Star,
+      icon: Zap,
       badge: "4.6",
       color: "text-amber-400",
     },
@@ -178,7 +185,7 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
               {/* Active dot */}
               <div
                 className={`w-1 h-1 rounded-full mt-1 ${
-                  app.id === "upload" ? "bg-red-400" : "bg-slate-500"
+                  app.id === "upload" ? "bg-amber-400" : "bg-slate-500"
                 }`}
               ></div>
             </div>

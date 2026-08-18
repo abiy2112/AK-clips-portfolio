@@ -4,7 +4,6 @@ import {
   Battery,
   Sliders,
   Search,
-  Star,
   ExternalLink,
   Film,
   Sparkles,
@@ -53,7 +52,7 @@ export default function MacOSMenuBar({
 
   const spotlightItems = [
     {
-      title: "⚡ Upload Video / Creator Studio (Passcode: 5252)",
+      title: "Upload Video / Creator Studio (Admin Only)",
       category: "Studio Admin",
       action: onOpenUpload,
       icon: Zap,
@@ -71,10 +70,16 @@ export default function MacOSMenuBar({
       icon: Play,
     },
     {
-      title: "Client Reviews (4.6 / 5.0 Star Rating)",
+      title: "Client Reviews (4.6 ⚡ Rating)",
       category: "Reviews",
       href: "#reviews",
-      icon: Star,
+      icon: Zap,
+    },
+    {
+      title: "Production Software & Toolkit (Premiere, After Effects, CapCut)",
+      category: "Tools",
+      href: "#software",
+      icon: Sliders,
     },
     {
       title: "Work Experience & Channels (MUSIKANA, Orbit Rise)",
@@ -132,6 +137,12 @@ export default function MacOSMenuBar({
                 Projects
               </a>
               <a
+                href="#software"
+                className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
+              >
+                Tools
+              </a>
+              <a
                 href="#work"
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
@@ -148,8 +159,9 @@ export default function MacOSMenuBar({
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-1"
               >
                 Reviews
-                <span className="px-1 py-0.2 bg-[#C8102E] text-[9px] font-bold rounded text-white">
-                  4.6★
+                <span className="px-1 py-0.2 bg-[#C8102E] text-[9px] font-bold rounded text-white flex items-center gap-0.5">
+                  <span>4.6</span>
+                  <Zap className="w-2.5 h-2.5 fill-current text-amber-300" />
                 </span>
               </a>
               <a
@@ -168,9 +180,9 @@ export default function MacOSMenuBar({
               <button
                 onClick={onOpenUpload}
                 className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#C8102E]/20 hover:bg-[#C8102E] text-[#ff4b67] hover:text-white border border-[#C8102E]/40 text-[10px] font-semibold transition-all cursor-pointer"
-                title="Upload / Add Video (Passcode: 5252)"
+                title="Upload / Add Video (Admin Only)"
               >
-                <Zap className="w-3 h-3 fill-current" />
+                <Zap className="w-3 h-3 fill-current text-amber-300" />
                 <span className="hidden xs:inline">Upload</span>
               </button>
             )}
@@ -180,7 +192,7 @@ export default function MacOSMenuBar({
               href="#reviews"
               className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-200 hover:text-white transition-colors"
             >
-              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+              <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span className="font-semibold text-white">4.6</span>
             </a>
 
@@ -263,12 +275,12 @@ export default function MacOSMenuBar({
               >
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-md bg-[#C8102E] text-white">
-                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
                   </div>
                   <div className="text-left">
                     <div>Upload / Add Video</div>
                     <div className="text-[10px] text-slate-400 font-normal">
-                      Passcode: 5252
+                      Admin Only
                     </div>
                   </div>
                 </div>
@@ -287,10 +299,10 @@ export default function MacOSMenuBar({
               </div>
 
               <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 flex items-center gap-2">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
                 <div>
                   <div className="text-[10px] font-semibold text-white">Rating</div>
-                  <div className="text-[9px] text-amber-400 font-bold">4.6 / 5.0</div>
+                  <div className="text-[9px] text-amber-400 font-bold">4.6 ⚡ / 5.0</div>
                 </div>
               </div>
             </div>
@@ -371,7 +383,7 @@ export default function MacOSMenuBar({
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search AK clipps (Upload Video, Projects, Reviews, Skills)..."
+                placeholder="Search AK clipps (Upload Video, Tools, Projects, Reviews)..."
                 className="w-full bg-transparent text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none"
               />
               <button
@@ -409,7 +421,7 @@ export default function MacOSMenuBar({
                           </div>
                         </div>
                         <span className="text-[10px] text-slate-500 group-hover:text-slate-300">
-                          Open ⚡
+                          Open
                         </span>
                       </button>
                     );
