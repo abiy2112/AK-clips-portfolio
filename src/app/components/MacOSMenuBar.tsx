@@ -137,12 +137,6 @@ export default function MacOSMenuBar({
                 Projects
               </a>
               <a
-                href="#software"
-                className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
-              >
-                Tools
-              </a>
-              <a
                 href="#work"
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
@@ -163,6 +157,12 @@ export default function MacOSMenuBar({
                   <span>4.6</span>
                   <Zap className="w-2.5 h-2.5 fill-current text-amber-300" />
                 </span>
+              </a>
+              <a
+                href="#software"
+                className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
+              >
+                Tools
               </a>
               <a
                 href="#contact"

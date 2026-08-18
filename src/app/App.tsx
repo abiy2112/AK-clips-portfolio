@@ -412,11 +412,6 @@ export default function App() {
         </MacOSWindow>
       </header>
 
-      {/* Moving Software Toolkit Marquee (Premiere Pro, After Effects, Media Encoder, CapCut, Figma, Photoshop, Illustrator) */}
-      <div id="software">
-        <SoftwareMarquee />
-      </div>
-
       {/* Featured Projects: Smaller Infinite Scrolling Ticker (Slow on Hover & Scrollable) */}
       <section id="projects" className="py-12 px-4 max-w-5xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
@@ -668,6 +663,11 @@ export default function App() {
           </div>
         </div>
       </section>
+
+      {/* Production Software & Creative Toolkit Marquee (Official Suite) */}
+      <div id="software">
+        <SoftwareMarquee />
+      </div>
 
       {/* Contact Section */}
       <section id="contact" className="py-16 px-4 text-center relative z-10">

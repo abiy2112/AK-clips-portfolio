@@ -46,21 +46,6 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
       color: "text-slate-200",
     },
     {
-      id: "software",
-      label: "Creative Toolkit (Premiere, AE, CapCut)",
-      href: "#software",
-      icon: Sliders,
-      color: "text-slate-200",
-    },
-    {
-      id: "upload",
-      label: "Studio Upload (Admin Only)",
-      onClick: onOpenUpload,
-      icon: Zap,
-      badge: "Admin",
-      color: "text-amber-400",
-    },
-    {
       id: "work",
       label: "Work Experience",
       href: "#work",
@@ -80,6 +65,21 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
       href: "#reviews",
       icon: Zap,
       badge: "4.6",
+      color: "text-amber-400",
+    },
+    {
+      id: "software",
+      label: "Creative Toolkit (Premiere, AE, CapCut)",
+      href: "#software",
+      icon: Sliders,
+      color: "text-slate-200",
+    },
+    {
+      id: "upload",
+      label: "Studio Upload (Admin Only)",
+      onClick: onOpenUpload,
+      icon: Zap,
+      badge: "Admin",
       color: "text-amber-400",
     },
     {
