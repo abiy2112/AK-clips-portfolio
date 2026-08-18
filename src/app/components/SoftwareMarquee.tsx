@@ -581,6 +581,14 @@ export default function SoftwareMarquee() {
     setIsDragging(false);
   };
 
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return;
     setIsDragging(true);
