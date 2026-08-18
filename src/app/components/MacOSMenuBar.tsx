@@ -12,6 +12,12 @@ import {
   X,
   Check,
   Zap,
+  Menu,
+  Briefcase,
+  Layers,
+  Mail,
+  Youtube,
+  Music,
 } from "lucide-react";
 import AKLogo from "./AKLogo";
 
@@ -28,6 +34,7 @@ export default function MacOSMenuBar({
   const [currentDate, setCurrentDate] = useState<string>("");
   const [showControlCenter, setShowControlCenter] = useState(false);
   const [showSpotlight, setShowSpotlight] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -64,25 +71,13 @@ export default function MacOSMenuBar({
       icon: Film,
     },
     {
-      title: "Featured Video Projects (YouTube, Drive, TikTok)",
+      title: "Featured Video Projects & Uploads",
       category: "Portfolio",
       href: "#projects",
       icon: Play,
     },
     {
-      title: "Client Reviews (4.6 ⚡ Rating)",
-      category: "Reviews",
-      href: "#reviews",
-      icon: Zap,
-    },
-    {
-      title: "Production Software & Toolkit (Premiere, After Effects, CapCut)",
-      category: "Tools",
-      href: "#software",
-      icon: Sliders,
-    },
-    {
-      title: "Work Experience & Channels (MUSIKANA, Orbit Rise)",
+      title: "Work Experience (MUSIKANA 8K+, Orbit Rise)",
       category: "Experience",
       href: "#work",
       icon: Sparkles,
@@ -91,6 +86,18 @@ export default function MacOSMenuBar({
       title: "Skills & Post-Production Software",
       category: "Skills",
       href: "#skills",
+      icon: Sliders,
+    },
+    {
+      title: "Client Reviews (4.6 ⚡ Rating)",
+      category: "Reviews",
+      href: "#reviews",
+      icon: Zap,
+    },
+    {
+      title: "Production Software & Toolkit (Official Logos)",
+      category: "Tools",
+      href: "#software",
       icon: Sliders,
     },
     {
@@ -109,20 +116,23 @@ export default function MacOSMenuBar({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 h-7 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 text-[11px] text-slate-300 select-none">
+      <header className="fixed top-0 left-0 right-0 z-50 h-9 sm:h-7 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 text-[11px] text-slate-300 select-none">
         <div className="max-w-7xl mx-auto h-full px-3 flex items-center justify-between">
           {/* Left Menu Items */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             <a
               href="#hero"
-              className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-slate-800 text-white transition-colors"
+              className="flex items-center gap-1.5 px-1.5 py-1 sm:py-0.5 rounded hover:bg-slate-800 text-white transition-colors"
             >
-              <AKLogo size={15} rounded="xl" />
-              <span className="font-bold tracking-tight">AK clipps</span>
+              <AKLogo size={16} rounded="xl" />
+              <span className="font-bold tracking-tight text-xs sm:text-[11px]">
+                AK clipps
+              </span>
             </a>
 
             <div className="h-2.5 w-[1px] bg-slate-800 mx-1 hidden sm:block"></div>
 
+            {/* Desktop Navigation Links */}
             <nav className="hidden sm:flex items-center gap-0.5 text-slate-300">
               <a
                 href="#hero"
@@ -173,24 +183,24 @@ export default function MacOSMenuBar({
             </nav>
           </div>
 
-          {/* Right Status Controls */}
-          <div className="flex items-center gap-1 sm:gap-2 text-slate-400">
-            {/* Quick Upload Button */}
+          {/* Right Status Controls & Mobile Hamburger */}
+          <div className="flex items-center gap-1.5 sm:gap-2 text-slate-400">
+            {/* Quick Upload Button (Touch-optimized on mobile) */}
             {onOpenUpload && (
               <button
                 onClick={onOpenUpload}
-                className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#C8102E]/20 hover:bg-[#C8102E] text-[#ff4b67] hover:text-white border border-[#C8102E]/40 text-[10px] font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 sm:py-0.5 rounded bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] hover:to-[#b00e27] text-white text-[10px] font-bold shadow-sm transition-all cursor-pointer border border-red-500/40"
                 title="Upload / Add Video (Admin Only)"
               >
                 <Zap className="w-3 h-3 fill-current text-amber-300" />
-                <span className="hidden xs:inline">Upload</span>
+                <span>Upload</span>
               </button>
             )}
 
             {/* Rating pill indicator */}
             <a
               href="#reviews"
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-200 hover:text-white transition-colors"
+              className="flex items-center gap-1 px-1.5 py-1 sm:py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-200 hover:text-white transition-colors"
             >
               <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span className="font-semibold text-white">4.6</span>
@@ -199,20 +209,20 @@ export default function MacOSMenuBar({
             {/* Spotlight Search button */}
             <button
               onClick={() => setShowSpotlight(true)}
-              className="p-1 rounded hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 sm:p-1 rounded hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
               title="Spotlight Search"
             >
-              <Search className="w-3 h-3" />
+              <Search className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
             </button>
 
-            {/* Wi-Fi */}
-            <div className="p-0.5 hidden xs:block" title="Wi-Fi: Connected">
+            {/* Wi-Fi (Desktop only) */}
+            <div className="p-0.5 hidden md:block" title="Wi-Fi: Connected">
               <Wifi className="w-3 h-3" />
             </div>
 
-            {/* Battery */}
+            {/* Battery (Desktop only) */}
             <div
-              className="hidden sm:flex items-center gap-1 p-0.5"
+              className="hidden md:flex items-center gap-1 p-0.5"
               title="100% Battery"
             >
               <span className="text-[10px]">100%</span>
@@ -222,29 +232,163 @@ export default function MacOSMenuBar({
             {/* Control Center Toggle */}
             <button
               onClick={() => setShowControlCenter((p) => !p)}
-              className={`p-1 rounded transition-colors cursor-pointer ${
+              className={`p-1.5 sm:p-1 rounded transition-colors cursor-pointer hidden xs:block ${
                 showControlCenter
                   ? "bg-slate-800 text-white"
                   : "hover:bg-slate-800 hover:text-white"
               }`}
               title="Control Center"
             >
-              <Sliders className="w-3 h-3" />
+              <Sliders className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
             </button>
 
-            {/* Live Clock */}
-            <div className="font-medium px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-1">
+            {/* Live Clock (Desktop only) */}
+            <div className="font-medium px-1.5 py-0.5 rounded hover:bg-slate-800 text-slate-200 hidden sm:flex items-center gap-1">
               <span className="hidden md:inline text-slate-400">{currentDate}</span>
               <span>{currentTime}</span>
             </div>
+
+            {/* Mobile Navigation Menu Toggle (Hamburger) */}
+            <button
+              onClick={() => setShowMobileMenu((p) => !p)}
+              className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 hover:text-white sm:hidden transition-colors cursor-pointer"
+              title="Open Navigation Menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
 
+      {/* Mobile Navigation Slide-out Sheet */}
+      {showMobileMenu && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-end sm:hidden animate-fade-in"
+          onClick={() => setShowMobileMenu(false)}
+        >
+          <div
+            className="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 pb-8 space-y-4 shadow-2xl animate-fade-in-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sheet Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <AKLogo size={24} rounded="xl" />
+                <div>
+                  <div className="text-sm font-bold text-white">AK clipps Navigation</div>
+                  <div className="text-[10px] text-slate-400">Abiy Ketema • Video Editor</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMobileMenu(false)}
+                className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              {onOpenUpload && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    onOpenUpload();
+                  }}
+                  className="col-span-2 p-2.5 rounded-xl bg-gradient-to-r from-[#C8102E] to-red-700 text-white flex items-center justify-between font-bold text-xs shadow-md border border-red-500/40"
+                >
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 fill-current text-amber-300" />
+                    <span>Upload Video / Creator Studio</span>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.2 bg-black/40 rounded">Admin</span>
+                </button>
+              )}
+
+              <a
+                href="#projects"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Film className="w-4 h-4 text-cyan-400" />
+                <span>Projects ({projects.length || "Featured"})</span>
+              </a>
+
+              <a
+                href="#reviews"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <span>Reviews (4.6★)</span>
+              </a>
+
+              <a
+                href="#work"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Briefcase className="w-4 h-4 text-emerald-400" />
+                <span>Work Experience</span>
+              </a>
+
+              <a
+                href="#skills"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Layers className="w-4 h-4 text-purple-400" />
+                <span>Skills & Software</span>
+              </a>
+
+              <a
+                href="#software"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Sliders className="w-4 h-4 text-cyan-400" />
+                <span>Creative Toolkit</span>
+              </a>
+
+              <a
+                href="#contact"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Mail className="w-4 h-4 text-pink-400" />
+                <span>Get in Touch</span>
+              </a>
+            </div>
+
+            {/* Direct Connect Buttons */}
+            <div className="pt-2 border-t border-slate-800 flex gap-2">
+              <a
+                href="https://t.me/Ak_clips"
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 py-2.5 rounded-xl bg-[#C8102E] text-white flex items-center justify-center gap-2 text-xs font-bold shadow-md"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Telegram</span>
+              </a>
+
+              <a
+                href="mailto:abiyketema21@gmail.com"
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center gap-2 text-xs font-medium"
+              >
+                <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Email</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* macOS Control Center Dropdown */}
       {showControlCenter && (
         <div
-          className="fixed top-8 right-3 z-50 w-72 p-3 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-xl text-slate-200 select-none shadow-xl"
+          className="fixed top-10 right-3 z-50 w-72 p-3 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-xl text-slate-200 select-none shadow-xl animate-fade-in"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-800">
@@ -368,11 +512,11 @@ export default function MacOSMenuBar({
       {/* Spotlight Search Modal */}
       {showSpotlight && (
         <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-20 px-4 animate-fade-in"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-16 sm:pt-20 px-3 sm:px-4 animate-fade-in"
           onClick={() => setShowSpotlight(false)}
         >
           <div
-            className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl"
+            className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search Input Bar */}
@@ -383,7 +527,7 @@ export default function MacOSMenuBar({
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search AK clipps (Upload Video, Tools, Projects, Reviews)..."
+                placeholder="Search AK clipps (Upload, Projects, Reviews, Tools)..."
                 className="w-full bg-transparent text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none"
               />
               <button

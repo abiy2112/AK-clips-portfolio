@@ -40,10 +40,10 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
     },
     {
       id: "projects",
-      label: "Featured Projects",
+      label: "Featured Projects & Uploads",
       href: "#projects",
       icon: Film,
-      color: "text-slate-200",
+      color: "text-cyan-400",
     },
     {
       id: "work",
@@ -69,7 +69,7 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
     },
     {
       id: "software",
-      label: "Creative Toolkit (Premiere, AE, CapCut)",
+      label: "Creative Toolkit (Official Logos)",
       href: "#software",
       icon: Sliders,
       color: "text-slate-200",
@@ -119,8 +119,8 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
   ];
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 select-none">
-      <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 px-2.5 py-1.5 rounded-2xl flex items-center gap-1.5 shadow-2xl">
+    <div className="fixed bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-40 select-none max-w-[96vw]">
+      <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-800 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl flex items-center gap-1 sm:gap-1.5 shadow-2xl overflow-x-auto scrollbar-hide max-w-full touch-pan-x">
         {/* Main Section Navigation */}
         {mainApps.map((app) => {
           const isHovered = hoveredId === app.id;
@@ -128,13 +128,13 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
           return (
             <div
               key={app.id}
-              className="relative flex flex-col items-center"
+              className="relative flex flex-col items-center shrink-0"
               onMouseEnter={() => setHoveredId(app.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              {/* Tooltip Badge */}
+              {/* Tooltip Badge (Desktop) */}
               {isHovered && (
-                <div className="absolute -top-8 px-2 py-0.5 bg-slate-950 border border-slate-800 text-white text-[10px] font-medium rounded-md shadow-lg whitespace-nowrap animate-fade-in pointer-events-none z-50">
+                <div className="hidden sm:block absolute -top-8 px-2 py-0.5 bg-slate-950 border border-slate-800 text-white text-[10px] font-medium rounded-md shadow-lg whitespace-nowrap animate-fade-in pointer-events-none z-50">
                   {app.label}
                 </div>
               )}
@@ -143,17 +143,18 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
                 <button
                   type="button"
                   onClick={app.onClick}
-                  className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform cursor-pointer ${
+                  className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform cursor-pointer ${
                     isHovered
-                      ? "scale-115 -translate-y-1 bg-slate-800"
-                      : "bg-slate-950/60 hover:bg-slate-800"
+                      ? "scale-110 -translate-y-1 bg-slate-800"
+                      : "bg-slate-950/70 hover:bg-slate-800"
                   }`}
+                  title={app.label}
                 >
                   {app.icon && (
-                    <app.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
+                    <app.icon className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
                   )}
                   {app.badge && (
-                    <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[8px] font-bold rounded-full border border-slate-950">
+                    <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[7px] sm:text-[8px] font-bold rounded-full border border-slate-950">
                       {app.badge}
                     </span>
                   )}
@@ -161,21 +162,22 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
               ) : (
                 <a
                   href={app.href}
-                  className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform ${
+                  className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform ${
                     isHovered
-                      ? "scale-115 -translate-y-1 bg-slate-800"
-                      : "bg-slate-950/60 hover:bg-slate-800"
+                      ? "scale-110 -translate-y-1 bg-slate-800"
+                      : "bg-slate-950/70 hover:bg-slate-800"
                   }`}
+                  title={app.label}
                 >
                   {app.isCustomLogo ? (
-                    <AKLogo size={28} rounded="xl" />
+                    <AKLogo size={22} rounded="xl" />
                   ) : app.icon ? (
-                    <app.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
+                    <app.icon className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
                   ) : null}
 
                   {/* Rating Badge */}
                   {app.badge && (
-                    <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[8px] font-bold rounded-full border border-slate-950">
+                    <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[7px] sm:text-[8px] font-bold rounded-full border border-slate-950">
                       {app.badge}
                     </span>
                   )}
@@ -184,7 +186,7 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
 
               {/* Active dot */}
               <div
-                className={`w-1 h-1 rounded-full mt-1 ${
+                className={`w-1 h-1 rounded-full mt-0.5 sm:mt-1 ${
                   app.id === "upload" ? "bg-amber-400" : "bg-slate-500"
                 }`}
               ></div>
@@ -193,7 +195,7 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
         })}
 
         {/* Dock Separator */}
-        <div className="w-[1px] h-6 bg-slate-800 mx-1"></div>
+        <div className="w-[1px] h-5 sm:h-6 bg-slate-800 mx-0.5 sm:mx-1 shrink-0"></div>
 
         {/* Social / External Shortcuts */}
         {externalApps.map((app) => {
@@ -202,13 +204,13 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
           return (
             <div
               key={app.id}
-              className="relative flex flex-col items-center"
+              className="relative flex flex-col items-center shrink-0"
               onMouseEnter={() => setHoveredId(app.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              {/* Tooltip Badge */}
+              {/* Tooltip Badge (Desktop) */}
               {isHovered && (
-                <div className="absolute -top-8 px-2 py-0.5 bg-slate-950 border border-slate-800 text-white text-[10px] font-medium rounded-md shadow-lg whitespace-nowrap animate-fade-in pointer-events-none z-50">
+                <div className="hidden sm:block absolute -top-8 px-2 py-0.5 bg-slate-950 border border-slate-800 text-white text-[10px] font-medium rounded-md shadow-lg whitespace-nowrap animate-fade-in pointer-events-none z-50">
                   {app.label}
                 </div>
               )}
@@ -217,16 +219,17 @@ export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
                 href={app.href}
                 target="_blank"
                 rel="noreferrer"
-                className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform ${
-                  isHovered ? "scale-115 -translate-y-1 bg-slate-800" : "bg-slate-950/60 hover:bg-slate-800"
+                className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform ${
+                  isHovered ? "scale-110 -translate-y-1 bg-slate-800" : "bg-slate-950/70 hover:bg-slate-800"
                 }`}
+                title={app.label}
               >
                 {app.icon && (
-                  <app.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
+                  <app.icon className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
                 )}
               </a>
 
-              <div className="w-1 h-1 rounded-full bg-cyan-400 mt-1"></div>
+              <div className="w-1 h-1 rounded-full bg-cyan-400 mt-0.5 sm:mt-1"></div>
             </div>
           );
         })}

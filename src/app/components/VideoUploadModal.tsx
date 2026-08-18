@@ -14,9 +14,17 @@ import {
   Lock,
   Layers,
   FileVideo,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { ProjectItem } from "../types/project";
-import { parseVideoSource, extractYouTubeId, extractGoogleDriveId } from "../utils/videoParser";
+import {
+  parseVideoSource,
+  extractYouTubeId,
+  extractGoogleDriveId,
+  storeVideoBlob,
+  generateThumbnailFromVideoFile,
+} from "../utils/videoParser";
 import AKLogo from "./AKLogo";
 
 interface VideoUploadModalProps {
@@ -30,8 +38,8 @@ interface VideoUploadModalProps {
 }
 
 const CATEGORY_PRESETS = [
-  "Cinematic Documentary",
   "TikTok & Shorts",
+  "Cinematic Documentary",
   "Social Media Promo",
   "Creative Typography",
   "Luxury Commercial",
@@ -59,6 +67,8 @@ export default function VideoUploadModal({
   const [duration, setDuration] = useState("");
   const [localFileName, setLocalFileName] = useState("");
   const [localFileObjectUrl, setLocalFileObjectUrl] = useState("");
+  const [localFileBlob, setLocalFileBlob] = useState<Blob | null>(null);
+  const [isCapturingThumbnail, setIsCapturingThumbnail] = useState(false);
   const [isSuccessMessage, setIsSuccessMessage] = useState(false);
   const [validationError, setValidationError] = useState("");
 
@@ -68,19 +78,37 @@ export default function VideoUploadModal({
   if (!isOpen) return null;
 
   // Handle local video file selection
-  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setValidationError("");
     setLocalFileName(file.name);
+    setLocalFileBlob(file);
+
     const objectUrl = URL.createObjectURL(file);
     setLocalFileObjectUrl(objectUrl);
     setVideoUrl(objectUrl);
 
     if (!title) {
-      // Auto set clean title from filename
-      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      // Auto-populate clean title from filename
+      const cleanName = file.name
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[-_]/g, " ");
       setTitle(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
+    }
+
+    // Auto-generate video thumbnail from first frame
+    setIsCapturingThumbnail(true);
+    try {
+      const generatedThumb = await generateThumbnailFromVideoFile(file);
+      if (generatedThumb && !thumbnailUrl) {
+        setThumbnailUrl(generatedThumb);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsCapturingThumbnail(false);
     }
   };
 
@@ -103,12 +131,12 @@ export default function VideoUploadModal({
     setValidationError("");
     const ytId = extractYouTubeId(val);
     if (ytId && !thumbnailUrl) {
-      setThumbnailUrl(`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`);
+      setThumbnailUrl(`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`);
     }
   };
 
   // Submit Handler
-  const handlePublish = (e: React.FormEvent) => {
+  const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const targetUrl = uploadMode === "link" ? videoUrl.trim() : localFileObjectUrl;
@@ -116,7 +144,7 @@ export default function VideoUploadModal({
       setValidationError(
         uploadMode === "link"
           ? "Please enter a valid YouTube, Google Drive, TikTok, or video link."
-          : "Please select a local video file from your computer."
+          : "Please select a local video file from your computer or phone."
       );
       return;
     }
@@ -139,6 +167,14 @@ export default function VideoUploadModal({
       duration.trim() || undefined
     );
 
+    // If local file, save to IndexedDB
+    if (uploadMode === "file" && localFileBlob) {
+      await storeVideoBlob(newProject.id, localFileBlob);
+      newProject.type = "local";
+      newProject.videoUrl = localFileObjectUrl;
+      newProject.embedUrl = localFileObjectUrl;
+    }
+
     onAddProject(newProject);
 
     // Show success confirmation
@@ -152,9 +188,10 @@ export default function VideoUploadModal({
       setDuration("");
       setLocalFileName("");
       setLocalFileObjectUrl("");
+      setLocalFileBlob(null);
       setCustomCategory("");
-      setActiveTab("manage");
-    }, 1200);
+      onClose(); // Close modal and let user see the newly added video!
+    }, 1000);
   };
 
   const detectedYtId = extractYouTubeId(videoUrl);
@@ -170,16 +207,16 @@ export default function VideoUploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-5 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-fade-in-up"
+        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] animate-fade-in-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* macOS Title Bar with Creator Badge */}
-        <div className="px-4 py-3 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        {/* macOS Title Bar with Admin Badge */}
+        <div className="px-3.5 py-2.5 sm:px-4 sm:py-3 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <div className="flex items-center gap-1.5">
               <span
                 onClick={onClose}
@@ -189,29 +226,29 @@ export default function VideoUploadModal({
               <span className="w-3 h-3 rounded-full bg-amber-500 block"></span>
               <span className="w-3 h-3 rounded-full bg-emerald-500 block"></span>
             </div>
-            <div className="flex items-center gap-2">
-              <AKLogo size={18} rounded="md" />
-              <span className="text-xs font-bold text-white">
-                AK clipps Creator Studio
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <AKLogo size={16} rounded="md" />
+              <span className="text-xs sm:text-sm font-bold text-white">
+                AK clipps Studio
               </span>
-              <span className="px-2 py-0.2 rounded-full bg-emerald-950/70 border border-emerald-800 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                Admin (Abiy)
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-950/70 border border-emerald-800 text-emerald-400 text-[9px] sm:text-[10px] font-semibold flex items-center gap-1">
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400"></span>
+                <span>Admin</span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => {
                 onLockSession();
                 onClose();
               }}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-[11px] text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Lock creator session"
             >
               <Lock className="w-3 h-3 text-slate-400" />
-              <span className="hidden sm:inline">Lock</span>
+              <span className="hidden xs:inline">Lock</span>
             </button>
             <button
               onClick={onClose}
@@ -223,11 +260,11 @@ export default function VideoUploadModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="px-4 pt-3 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between">
+        <div className="px-3 sm:px-4 pt-2.5 bg-slate-950/50 border-b border-slate-800/80 flex items-center justify-between overflow-x-auto scrollbar-hide">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("upload")}
-              className={`pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+              className={`pb-2 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "upload"
                   ? "border-[#C8102E] text-white"
                   : "border-transparent text-slate-400 hover:text-slate-200"
@@ -239,7 +276,7 @@ export default function VideoUploadModal({
 
             <button
               onClick={() => setActiveTab("manage")}
-              className={`pb-2.5 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+              className={`pb-2 px-2.5 sm:px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "manage"
                   ? "border-[#C8102E] text-white"
                   : "border-transparent text-slate-400 hover:text-slate-200"
@@ -247,10 +284,10 @@ export default function VideoUploadModal({
             >
               <Layers className="w-3.5 h-3.5 text-slate-400" />
               <span>
-                Featured Projects List ({projects.length})
+                All Projects ({projects.length})
                 {customProjectsCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-[#C8102E] text-[10px] text-white">
-                    +{customProjectsCount} custom
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-[#C8102E] text-[9px] text-white">
+                    +{customProjectsCount} Uploads
                   </span>
                 )}
               </span>
@@ -260,33 +297,33 @@ export default function VideoUploadModal({
 
         {/* Tab 1: Upload / Add Video */}
         {activeTab === "upload" ? (
-          <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
-            {/* Input Mode Toggle: Links vs File */}
+          <div className="p-3 sm:p-5 overflow-y-auto space-y-4">
+            {/* Input Mode Toggle: Links vs Local File */}
             <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-950/70 border border-slate-800">
               <button
                 type="button"
                 onClick={() => setUploadMode("link")}
-                className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
                   uploadMode === "link"
-                    ? "bg-[#C8102E] text-white shadow-sm"
+                    ? "bg-[#C8102E] text-white shadow-sm font-bold"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                <LinkIcon className="w-3.5 h-3.5" />
-                <span>Google Drive / YouTube / Web Link</span>
+                <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Web Link (YouTube / Drive)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setUploadMode("file")}
-                className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
                   uploadMode === "file"
-                    ? "bg-[#C8102E] text-white shadow-sm"
+                    ? "bg-[#C8102E] text-white shadow-sm font-bold"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                <Upload className="w-3.5 h-3.5" />
-                <span>Upload Local Video File (.mp4/.mov)</span>
+                <Upload className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Upload Video File (.mp4/.mov)</span>
               </button>
             </div>
 
@@ -295,24 +332,22 @@ export default function VideoUploadModal({
               {uploadMode === "link" ? (
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-slate-300 flex items-center justify-between">
-                    <span>Video URL (YouTube, Google Drive, TikTok, or MP4)</span>
+                    <span>Video URL (YouTube, Google Drive, TikTok, or MP4 Link)</span>
                     <span className="text-[10px] text-cyan-400 font-normal">
                       Auto-detected
                     </span>
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={videoUrl}
-                      onChange={(e) => handleUrlChange(e.target.value)}
-                      placeholder="e.g. https://youtube.com/watch?v=... or Google Drive share link"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E] focus:ring-1 focus:ring-[#C8102E]"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={videoUrl}
+                    onChange={(e) => handleUrlChange(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=... or Google Drive link"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E] focus:ring-1 focus:ring-[#C8102E]"
+                  />
                   {detectedYtId && (
                     <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1">
                       <Check className="w-3 h-3" />
-                      <span>YouTube ID: {detectedYtId} (Thumbnail auto-loaded)</span>
+                      <span>YouTube ID: {detectedYtId} (Cover loaded)</span>
                     </div>
                   )}
                   {detectedGDriveId && (
@@ -326,7 +361,7 @@ export default function VideoUploadModal({
                 /* Local File Upload Method */
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-slate-300">
-                    Select Local Video File from PC
+                    Select Local Video File (.mp4, .mov, .webm)
                   </label>
                   <input
                     ref={fileInputRef}
@@ -337,21 +372,32 @@ export default function VideoUploadModal({
                   />
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-800 hover:border-slate-600 bg-slate-950/60 rounded-xl p-5 text-center cursor-pointer transition-colors"
+                    className="border-2 border-dashed border-slate-800 hover:border-slate-600 bg-slate-950/60 rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-colors"
                   >
-                    <FileVideo className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
-                    <div className="text-xs font-semibold text-white">
-                      {localFileName ? localFileName : "Click or drop your video file here"}
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-1">
-                      Supports MP4, MOV, WebM • Ready for immediate playback
-                    </div>
+                    {isCapturingThumbnail ? (
+                      <div className="flex flex-col items-center justify-center py-2">
+                        <Loader2 className="w-6 h-6 text-cyan-400 animate-spin mb-1" />
+                        <span className="text-xs text-slate-300 font-medium">
+                          Extracting video frame thumbnail...
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <FileVideo className="w-7 h-7 sm:w-8 sm:h-8 text-cyan-400 mx-auto mb-1.5" />
+                        <div className="text-xs font-semibold text-white truncate px-2">
+                          {localFileName ? localFileName : "Tap to browse video file from device"}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-1">
+                          Stored permanently in local browser memory (IndexedDB)
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Title & Duration */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 <div className="sm:col-span-2 space-y-1">
                   <label className="text-[11px] font-semibold text-slate-300">
                     Project Title *
@@ -360,14 +406,14 @@ export default function VideoUploadModal({
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Addis Luxury Penthouse Showcase"
+                    placeholder="e.g. Ethiopian Luxury Penthouse Cut"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-slate-300">
-                    Duration / Quality
+                    Duration / Quality Tag
                   </label>
                   <input
                     type="text"
@@ -390,9 +436,9 @@ export default function VideoUploadModal({
                       key={cat}
                       type="button"
                       onClick={() => setCategory(cat)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium transition-colors cursor-pointer ${
                         category === cat
-                          ? "bg-[#C8102E] text-white"
+                          ? "bg-[#C8102E] text-white font-bold"
                           : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
                       }`}
                     >
@@ -402,9 +448,9 @@ export default function VideoUploadModal({
                   <button
                     type="button"
                     onClick={() => setCategory("Custom")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium transition-colors cursor-pointer ${
                       category === "Custom"
-                        ? "bg-[#C8102E] text-white"
+                        ? "bg-[#C8102E] text-white font-bold"
                         : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
                     }`}
                   >
@@ -431,7 +477,7 @@ export default function VideoUploadModal({
                     onClick={() => thumbnailInputRef.current?.click()}
                     className="text-cyan-400 hover:text-cyan-300 text-[10px] cursor-pointer"
                   >
-                    Choose Image from PC
+                    Choose Cover Image
                   </button>
                 </div>
                 <input
@@ -445,7 +491,7 @@ export default function VideoUploadModal({
                   type="text"
                   value={thumbnailUrl}
                   onChange={(e) => setThumbnailUrl(e.target.value)}
-                  placeholder="https://example.com/thumbnail.jpg or leave blank for auto"
+                  placeholder="https://example.com/thumbnail.jpg or auto-captured from video"
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none"
                 />
               </div>
@@ -455,9 +501,9 @@ export default function VideoUploadModal({
                 <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl space-y-2">
                   <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3 text-cyan-400" />
-                    <span>MARQUEE LIVE PREVIEW</span>
+                    <span>PREVIEW BEFORE PUBLISHING</span>
                   </div>
-                  <div className="w-60 rounded-xl bg-slate-900 border border-slate-700 overflow-hidden shadow-lg mx-auto sm:mx-0">
+                  <div className="w-full max-w-[280px] rounded-xl bg-slate-900 border border-slate-700 overflow-hidden shadow-lg">
                     <div className="aspect-video bg-black relative flex items-center justify-center overflow-hidden">
                       {previewThumbnail ? (
                         <img
@@ -482,7 +528,7 @@ export default function VideoUploadModal({
                         {title || "Untitled Project"}
                       </div>
                       <div className="text-[9px] text-slate-400 mt-0.5">
-                        AK clipps • {duration || "Featured"}
+                        AK clipps • {duration || "Featured 4K"}
                       </div>
                     </div>
                   </div>
@@ -490,15 +536,16 @@ export default function VideoUploadModal({
               )}
 
               {validationError && (
-                <div className="text-xs text-red-400 font-medium">
-                  {validationError}
+                <div className="p-2.5 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 font-medium flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{validationError}</span>
                 </div>
               )}
 
               {isSuccessMessage && (
                 <div className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-800 text-xs font-semibold text-emerald-300 flex items-center justify-center gap-2 animate-fade-in">
                   <Check className="w-4 h-4 text-emerald-400" />
-                  <span>Video successfully added to Featured Projects!</span>
+                  <span>Video successfully published to Featured Projects!</span>
                 </div>
               )}
 
@@ -513,27 +560,27 @@ export default function VideoUploadModal({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-xs font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-xs font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                 >
                   <Zap className="w-4 h-4 fill-current" />
-                  <span>Publish Project to Featured Projects</span>
+                  <span>Publish to Featured Projects</span>
                 </button>
               </div>
             </form>
           </div>
         ) : (
           /* Tab 2: Manage Projects */
-          <div className="p-4 sm:p-5 overflow-y-auto space-y-3">
+          <div className="p-3 sm:p-5 overflow-y-auto space-y-3">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs text-slate-400">
-                All projects currently active in the ticker
+                All projects active in Featured section
               </div>
               <button
                 type="button"
                 onClick={onResetProjects}
                 className="text-[11px] text-red-400 hover:text-red-300 underline cursor-pointer"
               >
-                Reset to default projects
+                Reset to defaults
               </button>
             </div>
 
@@ -541,11 +588,13 @@ export default function VideoUploadModal({
               {projects.map((proj, idx) => (
                 <div
                   key={`${proj.id}-${idx}`}
-                  className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between gap-3"
+                  className="p-2.5 sm:p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <div className="w-12 h-8 rounded bg-black shrink-0 overflow-hidden relative border border-slate-800">
-                      {proj.thumbnailUrl || (proj.type === "youtube" || !proj.type) ? (
+                      {proj.thumbnailUrl ||
+                      proj.type === "youtube" ||
+                      !proj.type ? (
                         <img
                           src={
                             proj.thumbnailUrl ||
@@ -561,16 +610,16 @@ export default function VideoUploadModal({
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-white truncate flex items-center gap-2">
-                        <span>{proj.title}</span>
+                      <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                        <span className="truncate">{proj.title}</span>
                         {proj.isCustom && (
-                          <span className="px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 text-[9px]">
+                          <span className="shrink-0 px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 text-[8px] sm:text-[9px]">
                             Custom
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-400">
-                        {proj.category} • {proj.sourceLabel || "YouTube"}
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {proj.category} • {proj.sourceLabel || "Video"}
                       </div>
                     </div>
                   </div>
@@ -598,7 +647,7 @@ export default function VideoUploadModal({
                 className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add Another Video Project</span>
+                <span>Upload Another Video</span>
               </button>
             </div>
           </div>

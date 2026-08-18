@@ -1,26 +1,36 @@
 import { ProjectItem, VideoSourceType } from "../types/project";
+export {
+  storeVideoBlob,
+  getVideoBlob,
+  deleteVideoBlob,
+  generateThumbnailFromVideoFile,
+  loadStoredProjectsWithBlobs,
+  saveCustomProjects,
+  getCreatorAuthStatus,
+  setCreatorAuthStatus,
+} from "./videoStorage";
 
 /**
- * Extracts YouTube ID from various YouTube URL formats or raw ID.
+ * Extracts YouTube ID from various YouTube URL formats, shorts, or raw ID.
  */
 export function extractYouTubeId(urlOrId: string): string | null {
   const trimmed = urlOrId.trim();
   if (!trimmed) return null;
 
-  // If already an 11-char ID without slashes/queries
+  // Direct 11-character video ID
   if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
     return trimmed;
   }
 
-  // Handle standard watch URL, share URL, shorts, embed, etc.
+  // Handle standard watch URL, share URL, shorts, embed, mobile URLs, etc.
   const regex =
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
   const match = trimmed.match(regex);
   return match ? match[1] : null;
 }
 
 /**
- * Extracts Google Drive file ID from view/share links.
+ * Extracts Google Drive file ID from view/share/preview links.
  */
 export function extractGoogleDriveId(url: string): string | null {
   const trimmed = url.trim();
@@ -63,7 +73,7 @@ export function parseVideoSource(
         customThumbnail?.trim() ||
         `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
       duration: duration?.trim() || "YouTube Cut",
-      sourceLabel: "YouTube Cut",
+      sourceLabel: "YouTube Video",
       isCustom: true,
       createdAt: timestamp,
     };
@@ -119,50 +129,4 @@ export function parseVideoSource(
     isCustom: true,
     createdAt: timestamp,
   };
-}
-
-/**
- * Storage helpers for persisting custom projects
- */
-const STORAGE_KEY = "ak_portfolio_custom_projects_v1";
-const AUTH_KEY = "ak_creator_auth_v1";
-
-export function getStoredProjects(): ProjectItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error("Failed to load stored projects", e);
-    return [];
-  }
-}
-
-export function saveStoredProjects(projects: ProjectItem[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-  } catch (e) {
-    console.error("Failed to save projects to localStorage", e);
-  }
-}
-
-export function getCreatorAuthStatus(): boolean {
-  try {
-    return sessionStorage.getItem(AUTH_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-export function setCreatorAuthStatus(isAuth: boolean): void {
-  try {
-    if (isAuth) {
-      sessionStorage.setItem(AUTH_KEY, "true");
-    } else {
-      sessionStorage.removeItem(AUTH_KEY);
-    }
-  } catch {
-    // Ignore storage restrictions
-  }
 }

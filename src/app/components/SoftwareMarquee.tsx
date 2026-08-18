@@ -581,16 +581,26 @@ export default function SoftwareMarquee() {
     setIsDragging(false);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !containerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - containerRef.current.offsetLeft;
+    const x = e.touches[0].pageX - containerRef.current.offsetLeft;
     const walk = (x - startX) * 1.5;
     containerRef.current.scrollLeft = scrollLeft - walk;
   };
 
   return (
-    <section className="py-12 relative z-10 select-none">
+    <section className="py-10 sm:py-12 relative z-10 select-none">
       <div className="max-w-5xl mx-auto px-4 mb-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -621,8 +631,8 @@ export default function SoftwareMarquee() {
       {/* Moving Marquee Strip Container */}
       <div className="w-full relative overflow-hidden">
         {/* Soft edge fade masks */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-[#090D16] to-transparent z-20 pointer-events-none"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-[#090D16] to-transparent z-20 pointer-events-none"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-r from-[#090D16] to-transparent z-20 pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-24 bg-gradient-to-l from-[#090D16] to-transparent z-20 pointer-events-none"></div>
 
         <div
           ref={containerRef}
@@ -631,7 +641,10 @@ export default function SoftwareMarquee() {
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          className="flex gap-3.5 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing px-4 sm:px-8 py-3"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
+          className="flex gap-3.5 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing px-3 sm:px-8 py-3 touch-pan-x"
           style={{ scrollBehavior: "auto" }}
         >
           {displayTools.map((tool, idx) => (

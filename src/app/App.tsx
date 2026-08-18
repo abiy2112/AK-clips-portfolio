@@ -35,10 +35,11 @@ import VideoUploadModal from "./components/VideoUploadModal";
 import VideoPlayerModal from "./components/VideoPlayerModal";
 import { ProjectItem } from "./types/project";
 import {
-  getStoredProjects,
-  saveStoredProjects,
+  loadStoredProjectsWithBlobs,
+  saveCustomProjects,
   getCreatorAuthStatus,
   setCreatorAuthStatus,
+  deleteVideoBlob,
 } from "./utils/videoParser";
 
 const DEFAULT_PROJECTS: ProjectItem[] = [
@@ -79,17 +80,27 @@ const DEFAULT_PROJECTS: ProjectItem[] = [
 export default function App() {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Projects state: combines custom uploaded projects from localStorage with default projects
-  const [projects, setProjects] = useState<ProjectItem[]>(() => {
-    const custom = getStoredProjects();
-    return [...custom, ...DEFAULT_PROJECTS];
-  });
+  // Projects state: combines custom uploaded projects from IndexedDB/localStorage with default projects
+  const [projects, setProjects] = useState<ProjectItem[]>(DEFAULT_PROJECTS);
 
   // Modal & Auth states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [activeVideoModalProject, setActiveVideoModalProject] = useState<ProjectItem | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getCreatorAuthStatus());
+
+  // Load custom projects with live video blobs on startup
+  useEffect(() => {
+    let isMounted = true;
+    loadStoredProjectsWithBlobs().then((custom) => {
+      if (isMounted && custom.length > 0) {
+        setProjects([...custom, ...DEFAULT_PROJECTS]);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Intersection Observer for clean fade-in
@@ -131,25 +142,27 @@ export default function App() {
 
   const handleAddProject = (newProject: ProjectItem) => {
     setProjects((prev) => {
-      const updated = [newProject, ...prev];
+      const filtered = prev.filter((p) => p.id !== newProject.id);
+      const updated = [newProject, ...filtered];
       const customOnly = updated.filter((p) => p.isCustom);
-      saveStoredProjects(customOnly);
+      saveCustomProjects(customOnly);
       return updated;
     });
   };
 
   const handleDeleteProject = (projectId: string) => {
+    deleteVideoBlob(projectId);
     setProjects((prev) => {
       const updated = prev.filter((p) => p.id !== projectId);
       const customOnly = updated.filter((p) => p.isCustom);
-      saveStoredProjects(customOnly);
+      saveCustomProjects(customOnly);
       return updated;
     });
   };
 
   const handleResetProjects = () => {
     setProjects(DEFAULT_PROJECTS);
-    saveStoredProjects([]);
+    saveCustomProjects([]);
   };
 
   const handleLockSession = () => {
@@ -447,11 +460,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Infinite auto-scroll marquee component with hover slow down and drag */}
+        {/* Infinite auto-scroll marquee component with dual view + uploads highlight */}
         <FeaturedProjectsMarquee
           projects={projects}
           onSelectProject={(p) => setActiveVideoModalProject(p)}
           onOpenUpload={handleOpenUpload}
+          onDeleteProject={handleDeleteProject}
         />
       </section>
 
