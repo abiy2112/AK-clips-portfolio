@@ -19,6 +19,7 @@ import {
   Sliders,
   CheckCircle2,
   Clock,
+  Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import imagechan from "../img/channels4_profile.jpg";
@@ -29,9 +30,66 @@ import MacOSWindow from "./components/MacOSWindow";
 import VideoStudioTimeline from "./components/VideoStudioTimeline";
 import FeaturedProjectsMarquee from "./components/FeaturedProjectsMarquee";
 import AKLogo from "./components/AKLogo";
+import AdminAuthModal from "./components/AdminAuthModal";
+import VideoUploadModal from "./components/VideoUploadModal";
+import VideoPlayerModal from "./components/VideoPlayerModal";
+import { ProjectItem } from "./types/project";
+import {
+  getStoredProjects,
+  saveStoredProjects,
+  getCreatorAuthStatus,
+  setCreatorAuthStatus,
+} from "./utils/videoParser";
+
+const DEFAULT_PROJECTS: ProjectItem[] = [
+  {
+    id: "Kpl1YGsYaXY",
+    title: "Ethiopian Tourism & Heritage",
+    category: "Cinematic Documentary",
+    type: "youtube",
+    videoUrl: "https://youtube.com/watch?v=Kpl1YGsYaXY",
+    sourceLabel: "YouTube Cut",
+  },
+  {
+    id: "2y93gUqIRnY",
+    title: "Short Form Viral Cut 1",
+    category: "TikTok & Shorts",
+    type: "youtube",
+    videoUrl: "https://youtube.com/watch?v=2y93gUqIRnY",
+    sourceLabel: "TikTok / Shorts",
+  },
+  {
+    id: "se6H6d5qpNs",
+    title: "Dynamic Fast-Paced Cut 2",
+    category: "Social Media Promo",
+    type: "youtube",
+    videoUrl: "https://youtube.com/watch?v=se6H6d5qpNs",
+    sourceLabel: "YouTube Cut",
+  },
+  {
+    id: "4JyLoYDakG4",
+    title: "Kinetic Motion Visual 3",
+    category: "Creative Typography",
+    type: "youtube",
+    videoUrl: "https://youtube.com/watch?v=4JyLoYDakG4",
+    sourceLabel: "Creative Motion",
+  },
+];
 
 export default function App() {
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Projects state: combines custom uploaded projects from localStorage with default projects
+  const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    const custom = getStoredProjects();
+    return [...custom, ...DEFAULT_PROJECTS];
+  });
+
+  // Modal & Auth states
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [activeVideoModalProject, setActiveVideoModalProject] = useState<ProjectItem | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getCreatorAuthStatus());
 
   useEffect(() => {
     // Intersection Observer for clean fade-in
@@ -53,7 +111,52 @@ export default function App() {
     return () => {
       observerRef.current?.disconnect();
     };
-  }, []);
+  }, [projects]);
+
+  // Auth & Project management handlers
+  const handleOpenUpload = () => {
+    if (isAuthenticated) {
+      setIsUploadModalOpen(true);
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+    setCreatorAuthStatus(true);
+    setIsAuthModalOpen(false);
+    setIsUploadModalOpen(true);
+  };
+
+  const handleAddProject = (newProject: ProjectItem) => {
+    setProjects((prev) => {
+      const updated = [newProject, ...prev];
+      const customOnly = updated.filter((p) => p.isCustom);
+      saveStoredProjects(customOnly);
+      return updated;
+    });
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects((prev) => {
+      const updated = prev.filter((p) => p.id !== projectId);
+      const customOnly = updated.filter((p) => p.isCustom);
+      saveStoredProjects(customOnly);
+      return updated;
+    });
+  };
+
+  const handleResetProjects = () => {
+    setProjects(DEFAULT_PROJECTS);
+    saveStoredProjects([]);
+  };
+
+  const handleLockSession = () => {
+    setIsAuthenticated(false);
+    setCreatorAuthStatus(false);
+    setIsUploadModalOpen(false);
+  };
 
   const skills = [
     {
@@ -154,33 +257,10 @@ export default function App() {
     },
   ];
 
-  const projects = [
-    {
-      id: "Kpl1YGsYaXY",
-      title: "Ethiopian Tourism & Heritage",
-      category: "Cinematic Documentary",
-    },
-    {
-      id: "2y93gUqIRnY",
-      title: "Short Form Viral Cut 1",
-      category: "TikTok & Shorts",
-    },
-    {
-      id: "se6H6d5qpNs",
-      title: "Dynamic Fast-Paced Cut 2",
-      category: "Social Media Promo",
-    },
-    {
-      id: "4JyLoYDakG4",
-      title: "Kinetic Motion Visual 3",
-      category: "Creative Typography",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-[#090D16] text-slate-100 font-sans selection:bg-[#C8102E]/30 selection:text-white relative overflow-x-hidden pb-24">
       {/* macOS Clean Top Menu Bar */}
-      <MacOSMenuBar />
+      <MacOSMenuBar onOpenUpload={handleOpenUpload} />
 
       {/* Hero Section: Clean macOS Welcoming Screen */}
       <header id="hero" className="relative pt-14 sm:pt-16 pb-12 px-4 max-w-5xl mx-auto z-10">
@@ -245,6 +325,15 @@ export default function App() {
                   <Play className="w-3.5 h-3.5 text-slate-300 fill-slate-300" />
                   <span>Explore Projects</span>
                 </a>
+
+                <button
+                  type="button"
+                  onClick={handleOpenUpload}
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 font-medium rounded-lg border border-slate-700 hover:border-cyan-500/40 transition-colors flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current" />
+                  <span>⚡ Studio Upload (5252)</span>
+                </button>
               </div>
 
               {/* Quick Contacts */}
@@ -323,7 +412,7 @@ export default function App() {
       {/* Featured Projects: Smaller Infinite Scrolling Ticker (Slow on Hover & Scrollable) */}
       <section id="projects" className="py-14 px-4 max-w-5xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
                 <Play className="w-4 h-4 fill-slate-200" />
@@ -337,11 +426,30 @@ export default function App() {
                 </p>
               </div>
             </div>
+
+            {/* Creator Studio Upload Button with 5252 Passcode */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleOpenUpload}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] hover:to-[#b00e27] text-white text-xs font-bold shadow-lg shadow-red-950/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-red-500/30"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>⚡ Upload / Add Video</span>
+                <span className="px-1.5 py-0.2 bg-black/40 rounded text-[10px] text-red-200 font-mono">
+                  5252
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Infinite auto-scroll marquee component with hover slow down and drag */}
-        <FeaturedProjectsMarquee projects={projects} />
+        <FeaturedProjectsMarquee
+          projects={projects}
+          onSelectProject={(p) => setActiveVideoModalProject(p)}
+          onOpenUpload={handleOpenUpload}
+        />
       </section>
 
       {/* About Me Section */}
@@ -629,7 +737,31 @@ export default function App() {
       </footer>
 
       {/* Floating macOS Dock */}
-      <MacOSDock />
+      <MacOSDock onOpenUpload={handleOpenUpload} />
+
+      {/* Security Gatekeeper Authorization Modal (Passcode: 5252) */}
+      <AdminAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
+
+      {/* Creator Video Upload & Project Manager Studio Modal */}
+      <VideoUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        projects={projects}
+        onAddProject={handleAddProject}
+        onDeleteProject={handleDeleteProject}
+        onResetProjects={handleResetProjects}
+        onLockSession={handleLockSession}
+      />
+
+      {/* High-End Cinema Video Player Modal */}
+      <VideoPlayerModal
+        project={activeVideoModalProject}
+        onClose={() => setActiveVideoModalProject(null)}
+      />
     </div>
   );
 }

@@ -8,13 +8,15 @@ import {
   Send,
   Youtube,
   Music,
+  Zap,
 } from "lucide-react";
 import AKLogo from "./AKLogo";
 
 interface DockItem {
   id: string;
   label: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
   icon?: React.ComponentType<{ className?: string }>;
   isCustomLogo?: boolean;
   isExternal?: boolean;
@@ -22,7 +24,11 @@ interface DockItem {
   color?: string;
 }
 
-export default function MacOSDock() {
+interface MacOSDockProps {
+  onOpenUpload?: () => void;
+}
+
+export default function MacOSDock({ onOpenUpload }: MacOSDockProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const mainApps: DockItem[] = [
@@ -38,6 +44,14 @@ export default function MacOSDock() {
       href: "#projects",
       icon: Film,
       color: "text-slate-200",
+    },
+    {
+      id: "upload",
+      label: "⚡ Studio Upload (5252)",
+      onClick: onOpenUpload,
+      icon: Zap,
+      badge: "5252",
+      color: "text-red-400",
     },
     {
       id: "work",
@@ -118,28 +132,55 @@ export default function MacOSDock() {
                 </div>
               )}
 
-              <a
-                href={app.href}
-                className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform ${
-                  isHovered ? "scale-115 -translate-y-1 bg-slate-800" : "bg-slate-950/60 hover:bg-slate-800"
-                }`}
-              >
-                {app.isCustomLogo ? (
-                  <AKLogo size={28} rounded="xl" />
-                ) : app.icon ? (
-                  <app.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
-                ) : null}
+              {app.onClick ? (
+                <button
+                  type="button"
+                  onClick={app.onClick}
+                  className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform cursor-pointer ${
+                    isHovered
+                      ? "scale-115 -translate-y-1 bg-slate-800"
+                      : "bg-slate-950/60 hover:bg-slate-800"
+                  }`}
+                >
+                  {app.icon && (
+                    <app.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
+                  )}
+                  {app.badge && (
+                    <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[8px] font-bold rounded-full border border-slate-950">
+                      {app.badge}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <a
+                  href={app.href}
+                  className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-150 transform ${
+                    isHovered
+                      ? "scale-115 -translate-y-1 bg-slate-800"
+                      : "bg-slate-950/60 hover:bg-slate-800"
+                  }`}
+                >
+                  {app.isCustomLogo ? (
+                    <AKLogo size={28} rounded="xl" />
+                  ) : app.icon ? (
+                    <app.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${app.color || "text-white"}`} />
+                  ) : null}
 
-                {/* Rating Badge */}
-                {app.badge && (
-                  <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[8px] font-bold rounded-full border border-slate-950">
-                    {app.badge}
-                  </span>
-                )}
-              </a>
+                  {/* Rating Badge */}
+                  {app.badge && (
+                    <span className="absolute -top-1 -right-1 px-1 py-0.2 bg-[#C8102E] text-white text-[8px] font-bold rounded-full border border-slate-950">
+                      {app.badge}
+                    </span>
+                  )}
+                </a>
+              )}
 
               {/* Active dot */}
-              <div className="w-1 h-1 rounded-full bg-slate-500 mt-1"></div>
+              <div
+                className={`w-1 h-1 rounded-full mt-1 ${
+                  app.id === "upload" ? "bg-red-400" : "bg-slate-500"
+                }`}
+              ></div>
             </div>
           );
         })}

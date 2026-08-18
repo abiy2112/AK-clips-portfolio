@@ -12,14 +12,19 @@ import {
   Send,
   X,
   Check,
+  Zap,
 } from "lucide-react";
 import AKLogo from "./AKLogo";
 
 interface MacOSMenuBarProps {
   activeSection?: string;
+  onOpenUpload?: () => void;
 }
 
-export default function MacOSMenuBar({ activeSection = "hero" }: MacOSMenuBarProps) {
+export default function MacOSMenuBar({
+  activeSection = "hero",
+  onOpenUpload,
+}: MacOSMenuBarProps) {
   const [currentTime, setCurrentTime] = useState<string>("");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [showControlCenter, setShowControlCenter] = useState(false);
@@ -48,22 +53,28 @@ export default function MacOSMenuBar({ activeSection = "hero" }: MacOSMenuBarPro
 
   const spotlightItems = [
     {
+      title: "⚡ Upload Video / Creator Studio (Passcode: 5252)",
+      category: "Studio Admin",
+      action: onOpenUpload,
+      icon: Zap,
+    },
+    {
       title: "AK clipps - Video Editor & Creative Storyteller",
       category: "Profile",
       href: "#hero",
       icon: Film,
     },
     {
+      title: "Featured Video Projects (YouTube, Drive, TikTok)",
+      category: "Portfolio",
+      href: "#projects",
+      icon: Play,
+    },
+    {
       title: "Client Reviews (4.6 / 5.0 Star Rating)",
       category: "Reviews",
       href: "#reviews",
       icon: Star,
-    },
-    {
-      title: "Featured Video Projects (YouTube & Commercials)",
-      category: "Portfolio",
-      href: "#projects",
-      icon: Play,
     },
     {
       title: "Work Experience & Channels (MUSIKANA, Orbit Rise)",
@@ -152,6 +163,18 @@ export default function MacOSMenuBar({ activeSection = "hero" }: MacOSMenuBarPro
 
           {/* Right Status Controls */}
           <div className="flex items-center gap-1 sm:gap-2 text-slate-400">
+            {/* Quick Upload Button */}
+            {onOpenUpload && (
+              <button
+                onClick={onOpenUpload}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#C8102E]/20 hover:bg-[#C8102E] text-[#ff4b67] hover:text-white border border-[#C8102E]/40 text-[10px] font-semibold transition-all cursor-pointer"
+                title="Upload / Add Video (Passcode: 5252)"
+              >
+                <Zap className="w-3 h-3 fill-current" />
+                <span className="hidden xs:inline">Upload</span>
+              </button>
+            )}
+
             {/* Rating pill indicator */}
             <a
               href="#reviews"
@@ -229,6 +252,30 @@ export default function MacOSMenuBar({ activeSection = "hero" }: MacOSMenuBarPro
           </div>
 
           <div className="space-y-2">
+            {/* Creator Upload Action */}
+            {onOpenUpload && (
+              <button
+                onClick={() => {
+                  setShowControlCenter(false);
+                  onOpenUpload();
+                }}
+                className="w-full p-2 rounded-lg bg-gradient-to-r from-[#C8102E]/20 to-red-950/40 border border-[#C8102E]/40 hover:border-[#C8102E] text-white flex items-center justify-between text-xs font-semibold transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-[#C8102E] text-white">
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                  </div>
+                  <div className="text-left">
+                    <div>Upload / Add Video</div>
+                    <div className="text-[10px] text-slate-400 font-normal">
+                      Passcode: 5252
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] text-[#ff4b67]">Open →</span>
+              </button>
+            )}
+
             {/* Quick Status Cards */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 flex items-center gap-2">
@@ -324,7 +371,7 @@ export default function MacOSMenuBar({ activeSection = "hero" }: MacOSMenuBarPro
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search AK clipps (Projects, Reviews, Skills, Contact)..."
+                placeholder="Search AK clipps (Upload Video, Projects, Reviews, Skills)..."
                 className="w-full bg-transparent text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none"
               />
               <button
@@ -338,29 +385,60 @@ export default function MacOSMenuBar({ activeSection = "hero" }: MacOSMenuBarPro
             {/* Search Results */}
             <div className="max-h-64 overflow-y-auto p-1.5 divide-y divide-slate-800/40">
               {filteredSpotlight.length > 0 ? (
-                filteredSpotlight.map((item, idx) => (
-                  <a
-                    key={idx}
-                    href={item.href}
-                    onClick={() => setShowSpotlight(false)}
-                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800 transition-colors group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 rounded bg-slate-950 text-slate-300">
-                        <item.icon className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-white group-hover:text-cyan-400 transition-colors">
-                          {item.title}
+                filteredSpotlight.map((item, idx) => {
+                  const Icon = item.icon;
+                  if (item.action) {
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setShowSpotlight(false);
+                          item.action?.();
+                        }}
+                        className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800 transition-colors group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1.5 rounded bg-red-950/60 text-[#ff4b67]">
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium text-white group-hover:text-cyan-400 transition-colors">
+                              {item.title}
+                            </div>
+                            <div className="text-[10px] text-slate-400">{item.category}</div>
+                          </div>
                         </div>
-                        <div className="text-[10px] text-slate-400">{item.category}</div>
+                        <span className="text-[10px] text-slate-500 group-hover:text-slate-300">
+                          Open ⚡
+                        </span>
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={idx}
+                      href={item.href}
+                      onClick={() => setShowSpotlight(false)}
+                      className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-800 transition-colors group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded bg-slate-950 text-slate-300">
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-white group-hover:text-cyan-400 transition-colors">
+                            {item.title}
+                          </div>
+                          <div className="text-[10px] text-slate-400">{item.category}</div>
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-[10px] text-slate-500 group-hover:text-slate-300">
-                      Jump →
-                    </span>
-                  </a>
-                ))
+                      <span className="text-[10px] text-slate-500 group-hover:text-slate-300">
+                        Jump →
+                      </span>
+                    </a>
+                  );
+                })
               ) : (
                 <div className="py-6 text-center text-xs text-slate-500">
                   No results for "{searchQuery}"
