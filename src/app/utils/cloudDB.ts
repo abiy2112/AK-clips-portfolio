@@ -137,20 +137,37 @@ export function subscribeToReviews(
           await seedInitialReviews();
         } catch (e) {
           console.warn("[cloudDB] Could not seed initial reviews:", e);
-          // Fall back: still return INITIAL_REVIEWS sorted by createdAt
           callback([...INITIAL_REVIEWS].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)));
         }
-        // The snapshot listener will fire again after the batch write completes
         return;
       }
-      const reviews = snapshot.docs.map((d) => ({
-        ...(d.data() as Omit<ReviewItem, "id">),
-        id: d.id,
-      })) as ReviewItem[];
+      const reviews = snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          name: data.name || "Verified Client",
+          role: data.role || "Client",
+          companyOrHandle: data.companyOrHandle || "",
+          avatarBg: data.avatarBg || "bg-slate-800 border-slate-700",
+          avatarText: data.avatarText || "text-cyan-400",
+          rating: typeof data.rating === "number" ? data.rating : 4.6,
+          category: data.category || "TikTok & Reels",
+          date: data.date || "Recent",
+          comment: data.comment || "",
+          verified: typeof data.verified === "boolean" ? data.verified : true,
+          verifiedMethod: data.verifiedMethod,
+          verifiedHandle: data.verifiedHandle,
+          projectHighlight: data.projectHighlight,
+          likes: typeof data.likes === "number" ? data.likes : 0,
+          isCustom: data.isCustom ?? true,
+          createdAt: data.createdAt || Date.now(),
+        } as ReviewItem;
+      });
       callback(reviews);
     },
     (err) => {
       console.error("[cloudDB] reviews subscription error:", err);
+      callback([...INITIAL_REVIEWS]);
     }
   );
 }
@@ -174,7 +191,8 @@ export async function saveReviewToCloud(review: ReviewItem): Promise<void> {
   await setDoc(doc(db, "reviews", id), {
     ...rest,
     createdAt: review.createdAt ?? Date.now(),
-  });
+    updatedAt: Date.now(),
+  }, { merge: true });
 }
 
 /** Delete a review from Firestore. */
@@ -189,6 +207,6 @@ export async function loadReviewsOnce(): Promise<ReviewItem[]> {
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ ...(d.data() as Omit<ReviewItem, "id">), id: d.id })) as ReviewItem[];
   } catch {
-    return [];
+    return [...INITIAL_REVIEWS];
   }
 }

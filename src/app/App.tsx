@@ -202,6 +202,17 @@ export default function App() {
     setCustomProjects([]);
   };
 
+  const handleAddReview = (newReview: ReviewItem) => {
+    setReviews((prev) => [
+      newReview,
+      ...prev.filter((r) => r.id !== newReview.id),
+    ]);
+  };
+
+  const handleDeleteReview = (reviewId: string) => {
+    setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+  };
+
   const skills = [
     {
       category: "Video Editing",
@@ -302,15 +313,15 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 font-sans selection:bg-[#C8102E]/30 selection:text-white relative overflow-x-hidden pb-24">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 font-sans selection:bg-[#C8102E]/30 selection:text-white relative overflow-x-hidden pb-20 sm:pb-24">
       {/* macOS Clean Top Menu Bar with Discreet Lightning Icon for Admin Access */}
       <MacOSMenuBar
         onOpenAdmin={handleOpenAdmin}
         rating={contentSettings.rating}
       />
 
-      {/* Hero Section: Clean macOS Welcoming Screen */}
-      <header id="hero" className="relative pt-14 sm:pt-16 pb-8 px-4 max-w-5xl mx-auto z-10">
+      {/* Hero Section: Clean macOS Welcoming Screen (Mobile-First) */}
+      <header id="hero" className="relative pt-12 sm:pt-16 pb-6 sm:pb-8 px-3 sm:px-4 max-w-5xl mx-auto z-10">
         <MacOSWindow
           title={`${contentSettings.name} Studio`}
           subtitle={contentSettings.fullName}
@@ -331,10 +342,10 @@ export default function App() {
             </div>
           }
         >
-          {/* Clean Welcoming Screen */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center py-2 sm:py-4">
+          {/* Welcoming Screen */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center py-2 sm:py-4">
             {/* Left Content */}
-            <div className="md:col-span-8 space-y-4">
+            <div className="md:col-span-8 space-y-3.5 sm:space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-medium">
                 <AKLogo size={16} rounded="xl" />
                 <span>{contentSettings.badgeText}</span>
@@ -344,30 +355,30 @@ export default function App() {
                 <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-tight">
                   {contentSettings.name}
                 </h1>
-                <div className="text-base sm:text-lg text-slate-400 font-normal mt-1">
+                <div className="text-sm sm:text-lg text-slate-400 font-normal mt-1">
                   {contentSettings.fullName} • {contentSettings.tagline}
                 </div>
               </div>
 
-              <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
+              <p className="text-slate-300 text-xs sm:text-base leading-relaxed max-w-xl">
                 {contentSettings.heroDescription}
               </p>
 
-              {/* CTAs */}
-              <div className="flex flex-wrap gap-3 pt-1">
+              {/* CTAs (Full width on mobile phones, inline on desktop) */}
+              <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-1">
                 <a
                   href={contactSettings.telegramUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-5 py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 text-xs sm:text-sm cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-3 bg-[#C8102E] hover:bg-[#b00e27] text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-98"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="w-4 h-4" />
                   <span>Telegram (@{contactSettings.telegramUsername})</span>
                 </a>
 
                 <a
                   href="#projects"
-                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors flex items-center gap-2 text-xs sm:text-sm cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-98"
                 >
                   <Play className="w-3.5 h-3.5 text-slate-300 fill-slate-300" />
                   <span>Explore Projects</span>
@@ -378,30 +389,30 @@ export default function App() {
               <div className="flex flex-wrap gap-2 pt-1 text-xs text-slate-400">
                 <a
                   href={`mailto:${contactSettings.email}`}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:text-white transition-colors"
                 >
-                  <Mail className="w-3 h-3 text-cyan-400" />
-                  <span>{contactSettings.email}</span>
+                  <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-[11px] sm:text-xs">{contactSettings.email}</span>
                 </a>
                 <a
                   href={`tel:${contactSettings.phone.replace(/[^0-9+]/g, "")}`}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:text-white transition-colors"
                 >
-                  <Phone className="w-3 h-3 text-emerald-400" />
-                  <span>{contactSettings.phone}</span>
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-[11px] sm:text-xs">{contactSettings.phone}</span>
                 </a>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400">
-                  <MapPin className="w-3 h-3 text-red-400" />
-                  <span>{contactSettings.location}</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">
+                  <MapPin className="w-3.5 h-3.5 text-red-400" />
+                  <span className="text-[11px] sm:text-xs">{contactSettings.location}</span>
                 </div>
               </div>
             </div>
 
             {/* Right Clean Logo & Profile Card */}
             <div className="md:col-span-4 flex flex-col items-center">
-              <div className="w-full bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col items-center text-center">
+              <div className="w-full bg-slate-900 rounded-2xl border border-slate-800 p-4 sm:p-5 flex flex-col items-center text-center">
                 <div className="relative mb-3">
-                  <AKLogo size={105} rounded="2xl" />
+                  <AKLogo size={90} rounded="2xl" />
                   <div className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 bg-slate-950 border border-slate-800 rounded-full flex items-center gap-1 text-[10px] font-bold text-amber-400">
                     <Zap className="w-2.5 h-2.5 fill-amber-400" />
                     <span>{contentSettings.rating}</span>
@@ -437,7 +448,7 @@ export default function App() {
           </div>
 
           {/* Video Timeline Suite */}
-          <div id="timeline" className="mt-6 pt-5 border-t border-slate-800">
+          <div id="timeline" className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-slate-800">
             <div className="flex items-center justify-between mb-2 text-xs text-slate-400">
               <span className="font-medium flex items-center gap-1.5 text-slate-300">
                 <Sliders className="w-3.5 h-3.5 text-slate-400" />
@@ -451,8 +462,8 @@ export default function App() {
       </header>
 
       {/* Featured Projects Section */}
-      <section id="projects" className="py-12 px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
+      <section id="projects" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
+        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
               <Play className="w-4 h-4 fill-slate-200" />
@@ -462,13 +473,13 @@ export default function App() {
                 Featured <span className="text-cyan-400">Projects</span>
               </h2>
               <p className="text-slate-400 text-xs mt-0.5">
-                Continuous ticker • Hover to inspect or click to watch
+                Continuous ticker • Tap video card to watch
               </p>
             </div>
           </div>
         </div>
 
-        {/* Infinite auto-scroll marquee component */}
+        {/* Infinite auto-scroll marquee component with responsive phone playback */}
         <FeaturedProjectsMarquee
           projects={projects}
           onSelectProject={(p) => setActiveVideoModalProject(p)}
@@ -477,15 +488,15 @@ export default function App() {
       </section>
 
       {/* About Me Section */}
-      <section className="py-12 px-4 max-w-5xl mx-auto relative z-10">
+      <section className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
           <MacOSWindow
             title={`Inspector — About ${contentSettings.fullName}`}
             icon={<Award className="w-3.5 h-3.5 text-red-400" />}
           >
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
               <div className="md:col-span-3 flex justify-center">
-                <AKLogo size={95} rounded="2xl" />
+                <AKLogo size={85} rounded="2xl" />
               </div>
               <div className="md:col-span-9 space-y-2.5">
                 <h2 className="text-xl sm:text-2xl font-bold text-white">
@@ -504,8 +515,8 @@ export default function App() {
       </section>
 
       {/* Skills Section */}
-      <section id="skills" className="py-12 px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
+      <section id="skills" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
+        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
           <div className="flex items-center gap-2.5 mb-1">
             <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
               <Code className="w-4 h-4" />
@@ -519,7 +530,7 @@ export default function App() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {skills.map((s, i) => (
             <div
               key={i}
@@ -529,7 +540,7 @@ export default function App() {
             >
               <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 h-full flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2.5">
                     <span className="text-2xl">{s.icon}</span>
                     <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[9px] font-medium text-slate-300">
                       {s.badge}
@@ -559,8 +570,8 @@ export default function App() {
       </section>
 
       {/* Work Experience Section */}
-      <section id="work" className="py-12 px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
+      <section id="work" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
+        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
           <div className="flex items-center gap-2.5 mb-1">
             <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
               <Briefcase className="w-4 h-4" />
@@ -574,7 +585,7 @@ export default function App() {
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3.5 sm:space-y-4">
           {experiences.map((exp, i) => (
             <div
               key={i}
@@ -582,8 +593,8 @@ export default function App() {
                 i * 100
               }`}
             >
-              <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                <div className="flex flex-col md:flex-row gap-5 items-start justify-between">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+                <div className="flex flex-col md:flex-row gap-4 sm:gap-5 items-start justify-between">
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-base sm:text-lg font-bold text-white">{exp.title}</h3>
@@ -623,7 +634,7 @@ export default function App() {
                             href={link}
                             target="_blank"
                             rel="noreferrer"
-                            className="w-12 h-12 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col items-center justify-center text-slate-300 hover:text-white hover:border-slate-500 transition-colors"
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col items-center justify-center text-slate-300 hover:text-white hover:border-slate-500 transition-colors"
                             title="Watch TikTok Video"
                           >
                             <Music className="w-4 h-4 text-pink-400 mb-0.5" />
@@ -635,7 +646,7 @@ export default function App() {
                           href={exp.videoUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="relative w-20 h-20 rounded-xl border border-slate-700 overflow-hidden hover:opacity-90 transition-opacity"
+                          className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-slate-700 overflow-hidden hover:opacity-90 transition-opacity"
                         >
                           <img
                             src={exp.thumbnail}
@@ -656,13 +667,19 @@ export default function App() {
         </div>
       </section>
 
-      {/* Client Reviews Section (Abiy, Rating, 5M+ Views, Realtime Reviews) */}
-      <ClientReviews />
+      {/* Client Reviews Section (Fully Synced with Firestore & Real-Time) */}
+      <ClientReviews
+        reviews={reviews}
+        rating={contentSettings.rating}
+        isAdmin={isAuthenticated}
+        onAddReview={handleAddReview}
+        onDeleteReview={handleDeleteReview}
+      />
 
       {/* Education */}
-      <section className="py-10 px-4 max-w-4xl mx-auto relative z-10">
+      <section className="py-8 sm:py-10 px-3 sm:px-4 max-w-4xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
-          <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex items-center gap-2.5 mb-3.5">
             <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
               <GraduationCap className="w-4 h-4" />
             </div>
@@ -671,7 +688,7 @@ export default function App() {
             </h2>
           </div>
 
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
+          <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
             <h3 className="text-base font-bold text-white">
               Information Systems Student
             </h3>
@@ -691,50 +708,50 @@ export default function App() {
       </div>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16 px-4 text-center relative z-10">
+      <section id="contact" className="py-12 sm:py-16 px-3 sm:px-4 text-center relative z-10">
         <div className="max-w-3xl mx-auto flex flex-col items-center">
           <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-800 text-slate-300 text-xs font-medium mb-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-800 text-slate-300 text-xs font-medium mb-2.5">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               <span>Let's Create High-Impact Video Content</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2.5 tracking-tight">
               {contentSettings.contactSectionTitle}
             </h2>
 
-            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto mb-8">
+            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto mb-6 sm:mb-8">
               {contentSettings.contactSectionSubtitle}
             </p>
           </div>
 
           {/* Avatar */}
-          <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-200 mb-8">
-            <AKLogo size={90} rounded="2xl" />
+          <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-200 mb-6 sm:mb-8">
+            <AKLogo size={80} rounded="2xl" />
             <div className="mt-2 font-bold text-white text-sm">
               {contentSettings.name} ({contentSettings.fullName})
             </div>
             <div className="text-[11px] text-slate-400">{contactSettings.location}</div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons (Mobile-first full touch layout) */}
           <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-400 w-full max-w-lg">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <a
                 href={contactSettings.telegramUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="py-3 px-4 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
+                className="py-3 px-4 bg-[#C8102E] hover:bg-[#b00e27] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer shadow-md active:scale-98"
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-4 h-4" />
                 <span>Telegram</span>
               </a>
 
               <a
                 href={`mailto:${contactSettings.email}`}
-                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
+                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-98"
               >
-                <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                <Mail className="w-4 h-4 text-cyan-400" />
                 <span>Email</span>
               </a>
 
@@ -742,9 +759,9 @@ export default function App() {
                 href={contactSettings.linkedinUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
+                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-98"
               >
-                <Linkedin className="w-3.5 h-3.5 text-sky-400" />
+                <Linkedin className="w-4 h-4 text-sky-400" />
                 <span>LinkedIn</span>
               </a>
             </div>
@@ -787,10 +804,12 @@ export default function App() {
         onAddProject={handleAddProject}
         onDeleteProject={handleDeleteProject}
         onResetProjects={handleResetProjects}
+        onAddReview={handleAddReview}
+        onDeleteReview={handleDeleteReview}
         onLockSession={handleLockSession}
       />
 
-      {/* Cinema Video Player Modal */}
+      {/* Cinema Video Player Modal (Mobile Optimized) */}
       <VideoPlayerModal
         project={activeVideoModalProject}
         onClose={() => setActiveVideoModalProject(null)}

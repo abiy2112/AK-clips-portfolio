@@ -29,6 +29,7 @@ import {
   Star,
   RefreshCw,
   Eye,
+  ShieldCheck,
 } from "lucide-react";
 import { ProjectItem } from "../types/project";
 import { ReviewItem } from "../types/review";
@@ -64,6 +65,8 @@ interface AdminPanelProps {
   onAddProject: (newProject: ProjectItem) => void;
   onDeleteProject: (projectId: string) => void;
   onResetProjects: () => void;
+  onAddReview?: (newReview: ReviewItem) => void;
+  onDeleteReview?: (reviewId: string) => void;
   onLockSession: () => void;
 }
 
@@ -92,6 +95,8 @@ export default function AdminPanel({
   onAddProject,
   onDeleteProject,
   onResetProjects,
+  onAddReview,
+  onDeleteReview,
   onLockSession,
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<"projects" | "reviews" | "contact" | "content">("projects");
@@ -156,6 +161,15 @@ export default function AdminPanel({
   useEffect(() => {
     setContentForm(contentSettings);
   }, [contentSettings]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -265,7 +279,7 @@ export default function AdminPanel({
         duration: projectDuration.trim() || undefined,
         sourceLabel:
           uploadMode === "file"
-            ? "Direct MP4 File"
+            ? "Direct Video File"
             : parsed.type === "youtube"
             ? "YouTube Cut"
             : parsed.type === "googledrive"
@@ -312,18 +326,24 @@ export default function AdminPanel({
       const newReview: ReviewItem = {
         id: `rev_${Date.now()}`,
         name: reviewName.trim(),
-        role: reviewRole.trim() || "Creator / Brand",
+        role: reviewRole.trim() || "Verified Client",
         companyOrHandle: reviewHandle.trim() || "@creator",
+        avatarBg: "bg-slate-800 border-slate-700",
+        avatarText: "text-cyan-400",
         category: reviewCategory,
         rating: reviewRating,
         comment: reviewComment.trim(),
         projectHighlight: reviewHighlight.trim() || "Video Editing & Post-Production",
         date: "Just now",
+        verified: true,
+        verifiedMethod: "telegram",
+        verifiedHandle: reviewHandle.trim() || "@creator",
         likes: Number(reviewLikes) || 40,
-        verifiedClient: true,
+        isCustom: true,
         createdAt: Date.now(),
       };
 
+      onAddReview?.(newReview);
       await saveReviewToCloud(newReview);
 
       setReviewSuccessMsg(true);
@@ -346,6 +366,7 @@ export default function AdminPanel({
   const handleDeleteReview = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this review from the cloud database?")) {
       try {
+        onDeleteReview?.(id);
         await deleteReviewFromCloud(id);
       } catch (err) {
         console.error("Error deleting review:", err);
@@ -389,18 +410,17 @@ export default function AdminPanel({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-5xl h-[92vh] max-h-[850px] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up"
+        className="w-full sm:max-w-5xl h-full sm:h-[92vh] sm:max-h-[850px] bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Bar */}
-        <div className="px-4 py-3 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            {/* macOS traffic light circles */}
-            <div className="flex items-center gap-1.5">
+        <div className="px-3.5 py-3 sm:px-4 sm:py-3 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="hidden sm:flex items-center gap-1.5">
               <span
                 onClick={onClose}
                 className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 cursor-pointer block"
@@ -410,8 +430,6 @@ export default function AdminPanel({
               <span className="w-3 h-3 rounded-full bg-emerald-500 block"></span>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-800 hidden sm:block"></div>
-
             <div className="flex items-center gap-2">
               <AKLogo size={20} rounded="lg" />
               <div>
@@ -419,7 +437,7 @@ export default function AdminPanel({
                   Studio Admin Panel
                 </span>
                 <span className="hidden sm:inline text-[10px] text-slate-400 ml-2">
-                  Universal Management Suite
+                  Universal Suite
                 </span>
               </div>
             </div>
@@ -429,82 +447,81 @@ export default function AdminPanel({
           <div className="flex items-center gap-2">
             <button
               onClick={onLockSession}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-red-950/60 hover:text-red-300 text-slate-300 text-xs transition-colors cursor-pointer border border-slate-700"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-red-950 text-slate-300 hover:text-red-300 text-xs font-medium transition-colors cursor-pointer border border-slate-700 active:scale-95"
               title="Lock Admin Session"
             >
               <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Lock Session</span>
+              <span>Lock</span>
             </button>
 
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Tab Navigation Switcher */}
-        <div className="px-4 py-2 bg-slate-950/60 border-b border-slate-800 flex flex-wrap gap-1.5 shrink-0">
+        {/* Tab Navigation Switcher (Mobile Horizontally Scrollable) */}
+        <div className="px-2 sm:px-4 py-2 bg-slate-950/80 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto scrollbar-hide shrink-0">
           <button
             onClick={() => setActiveTab("projects")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === "projects"
                 ? "bg-[#C8102E] text-white shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
             }`}
           >
             <Film className="w-3.5 h-3.5" />
-            <span>Projects & Uploads ({projects.length})</span>
+            <span>Projects ({projects.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("reviews")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === "reviews"
                 ? "bg-[#C8102E] text-white shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
             }`}
           >
             <MessageSquareQuote className="w-3.5 h-3.5" />
-            <span>Client Reviews ({reviews.length})</span>
+            <span>Reviews ({reviews.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("contact")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === "contact"
                 ? "bg-[#C8102E] text-white shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
             }`}
           >
             <Phone className="w-3.5 h-3.5" />
-            <span>Contact & Socials</span>
+            <span>Contact & Links</span>
           </button>
 
           <button
             onClick={() => setActiveTab("content")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === "content"
                 ? "bg-[#C8102E] text-white shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
             }`}
           >
             <Edit3 className="w-3.5 h-3.5" />
-            <span>Written Content & Copy</span>
+            <span>Written Copy</span>
           </button>
         </div>
 
         {/* Tab Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#0B0F1A]/80">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 bg-[#0B0F1A]/90">
           {/* ================================================================ */}
           {/* TAB 1: PROJECTS & UPLOADS */}
           {/* ================================================================ */}
           {activeTab === "projects" && (
-            <div className="space-y-6">
-              {/* Project Subtabs */}
-              <div className="flex items-center justify-between">
+            <div className="space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex gap-2">
                   <button
                     onClick={() => setProjectSubTab("upload")}
@@ -515,7 +532,7 @@ export default function AdminPanel({
                     }`}
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Upload New Video</span>
+                    <span>Upload New</span>
                   </button>
 
                   <button
@@ -527,14 +544,14 @@ export default function AdminPanel({
                     }`}
                   >
                     <Layers className="w-3.5 h-3.5" />
-                    <span>Manage Projects ({projects.length})</span>
+                    <span>Manage ({projects.length})</span>
                   </button>
                 </div>
 
                 {projects.some((p) => p.isCustom) && (
                   <button
                     onClick={onResetProjects}
-                    className="text-[11px] text-red-400 hover:text-red-300 flex items-center gap-1"
+                    className="text-[11px] text-red-400 hover:text-red-300 flex items-center gap-1 self-start sm:self-auto"
                   >
                     <Trash2 className="w-3 h-3" />
                     <span>Clear All Custom</span>
@@ -543,38 +560,38 @@ export default function AdminPanel({
               </div>
 
               {projectSubTab === "upload" ? (
-                <form onSubmit={handleSaveProject} className="space-y-5 max-w-2xl mx-auto">
+                <form onSubmit={handleSaveProject} className="space-y-4 max-w-2xl mx-auto">
                   {/* Mode Selector */}
                   <div className="p-1 bg-slate-950 rounded-xl border border-slate-800 grid grid-cols-2 gap-1">
                     <button
                       type="button"
                       onClick={() => setUploadMode("link")}
-                      className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      className={`py-2 px-2.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         uploadMode === "link"
                           ? "bg-slate-800 text-white shadow-sm"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
                       <LinkIcon className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Video Link (YouTube / Drive / MP4)</span>
+                      <span>Video Link</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setUploadMode("file")}
-                      className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      className={`py-2 px-2.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         uploadMode === "file"
                           ? "bg-slate-800 text-white shadow-sm"
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
                       <Upload className="w-3.5 h-3.5 text-pink-400" />
-                      <span>Upload Local Video File</span>
+                      <span>Upload Video File</span>
                     </button>
                   </div>
 
                   {uploadMode === "link" ? (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-300">
                         Video Link URL <span className="text-red-400">*</span>
                       </label>
@@ -583,24 +600,24 @@ export default function AdminPanel({
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
                         placeholder="https://youtube.com/watch?v=... or https://drive.google.com/..."
-                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-300">
                         Select Video File <span className="text-red-400">*</span>
                       </label>
                       <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-700 hover:border-cyan-500/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-950/40"
+                        className="border-2 border-dashed border-slate-700 hover:border-cyan-500/60 rounded-xl p-5 text-center cursor-pointer transition-colors bg-slate-950/40"
                       >
-                        <FileVideo className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                        <FileVideo className="w-8 h-8 text-cyan-400 mx-auto mb-1.5" />
                         <div className="text-xs text-white font-medium">
-                          {localFileName ? localFileName : "Click to browse video file"}
+                          {localFileName ? localFileName : "Tap to browse video file"}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-1">
-                          Supports MP4, MOV, WebM (auto-uploads to cloud storage)
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          MP4, MOV, WebM (auto-uploads to cloud storage)
                         </div>
                         <input
                           ref={fileInputRef}
@@ -614,8 +631,8 @@ export default function AdminPanel({
                   )}
 
                   {/* Project Details Fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5 sm:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-1 sm:col-span-2">
                       <label className="block text-xs font-medium text-slate-300">
                         Project Title <span className="text-red-400">*</span>
                       </label>
@@ -623,17 +640,17 @@ export default function AdminPanel({
                         type="text"
                         value={projectTitle}
                         onChange={(e) => setProjectTitle(e.target.value)}
-                        placeholder="e.g., Luxury Real Estate Showcase 2026"
-                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        placeholder="e.g., Luxury Real Estate Showcase"
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-300">Category</label>
                       <select
                         value={projectCategory}
                         onChange={(e) => setProjectCategory(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                       >
                         {CATEGORY_PRESETS.map((cat) => (
                           <option key={cat} value={cat}>
@@ -643,7 +660,7 @@ export default function AdminPanel({
                       </select>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-300">
                         Custom Category (Optional)
                       </label>
@@ -652,11 +669,11 @@ export default function AdminPanel({
                         value={customCategory}
                         onChange={(e) => setCustomCategory(e.target.value)}
                         placeholder="e.g., 3D Kinetic Motion"
-                        className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-300">
                         Thumbnail URL or Image
                       </label>
@@ -666,7 +683,7 @@ export default function AdminPanel({
                           value={projectThumbnailUrl}
                           onChange={(e) => setProjectThumbnailUrl(e.target.value)}
                           placeholder="https://... or choose image"
-                          className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                          className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                         />
                         <button
                           type="button"
@@ -685,7 +702,7 @@ export default function AdminPanel({
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <label className="block text-xs font-medium text-slate-300">
                         Duration (Optional)
                       </label>
@@ -694,12 +711,11 @@ export default function AdminPanel({
                         value={projectDuration}
                         onChange={(e) => setProjectDuration(e.target.value)}
                         placeholder="e.g. 0:45 or 2:30"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
                   </div>
 
-                  {/* Upload Progress Indicator */}
                   {uploadProgress !== null && (
                     <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
                       <div className="flex justify-between text-xs text-slate-300">
@@ -715,7 +731,6 @@ export default function AdminPanel({
                     </div>
                   )}
 
-                  {/* Errors & Success */}
                   {projectError && (
                     <div className="p-3 rounded-xl bg-red-950/40 border border-red-800 text-xs text-red-300 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
@@ -730,8 +745,7 @@ export default function AdminPanel({
                     </div>
                   )}
 
-                  {/* Submit Button */}
-                  <div className="flex gap-3 pt-2">
+                  <div className="flex gap-2.5 pt-2">
                     <button
                       type="button"
                       onClick={handleResetProjectForm}
@@ -742,17 +756,17 @@ export default function AdminPanel({
                     <button
                       type="submit"
                       disabled={isUploadingProject}
-                      className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] text-white text-xs font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] text-white text-xs font-bold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
                     >
                       {isUploadingProject ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Saving Project to Cloud...</span>
+                          <span>Saving to Cloud...</span>
                         </>
                       ) : (
                         <>
                           <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
-                          <span>Publish Project to Portfolio</span>
+                          <span>Publish to Portfolio</span>
                         </>
                       )}
                     </button>
@@ -768,7 +782,7 @@ export default function AdminPanel({
                     {projects.map((proj) => (
                       <div
                         key={proj.id}
-                        className="p-3 bg-slate-950 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-3"
+                        className="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-3"
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
@@ -796,7 +810,7 @@ export default function AdminPanel({
                           {proj.isCustom ? (
                             <button
                               onClick={() => onDeleteProject(proj.id)}
-                              className="p-1.5 rounded bg-red-950/60 hover:bg-red-900 text-red-400 hover:text-white transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-400 hover:text-white transition-colors cursor-pointer"
                               title="Delete from Cloud"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -817,7 +831,7 @@ export default function AdminPanel({
           {/* TAB 2: CLIENT REVIEWS */}
           {/* ================================================================ */}
           {activeTab === "reviews" && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
                   <button
@@ -829,7 +843,7 @@ export default function AdminPanel({
                     }`}
                   >
                     <MessageSquareQuote className="w-3.5 h-3.5" />
-                    <span>Manage Reviews ({reviews.length})</span>
+                    <span>Manage ({reviews.length})</span>
                   </button>
 
                   <button
@@ -841,7 +855,7 @@ export default function AdminPanel({
                     }`}
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Add New Testimonial</span>
+                    <span>Add New</span>
                   </button>
                 </div>
               </div>
@@ -862,8 +876,8 @@ export default function AdminPanel({
                             <div>
                               <div className="text-xs font-bold text-white flex items-center gap-1.5">
                                 <span>{rev.name}</span>
-                                {rev.verifiedClient && (
-                                  <CheckCircle2 className="w-3 h-3 text-cyan-400" />
+                                {rev.verified && (
+                                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
                                 )}
                               </div>
                               <div className="text-[10px] text-slate-400">
@@ -879,16 +893,18 @@ export default function AdminPanel({
 
                           <p className="text-xs text-slate-300 italic">"{rev.comment}"</p>
 
-                          <div className="text-[10px] text-cyan-400 font-medium">
-                            ★ {rev.projectHighlight}
-                          </div>
+                          {rev.projectHighlight && (
+                            <div className="text-[10px] text-cyan-400 font-medium">
+                              ★ {rev.projectHighlight}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px] text-slate-500">
                           <span>Category: {rev.category}</span>
                           <button
                             onClick={() => handleDeleteReview(rev.id)}
-                            className="flex items-center gap-1 px-2 py-1 rounded bg-red-950/60 hover:bg-red-900 text-red-400 hover:text-white transition-colors cursor-pointer"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-400 hover:text-white transition-colors cursor-pointer"
                             title="Delete Review"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -901,7 +917,7 @@ export default function AdminPanel({
                 </div>
               ) : (
                 /* Add New Review Form */
-                <form onSubmit={handleAddReviewSubmit} className="space-y-4 max-w-xl mx-auto">
+                <form onSubmit={handleAddReviewSubmit} className="space-y-3.5 max-w-xl mx-auto">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="block text-xs text-slate-300">Client Name *</label>
@@ -910,7 +926,7 @@ export default function AdminPanel({
                         value={reviewName}
                         onChange={(e) => setReviewName(e.target.value)}
                         placeholder="e.g. Dawit & Orbit Rise"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
@@ -921,7 +937,7 @@ export default function AdminPanel({
                         value={reviewRole}
                         onChange={(e) => setReviewRole(e.target.value)}
                         placeholder="e.g. Lead Creator"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
@@ -932,7 +948,7 @@ export default function AdminPanel({
                         value={reviewHandle}
                         onChange={(e) => setReviewHandle(e.target.value)}
                         placeholder="e.g. @orbitrise"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
@@ -941,7 +957,7 @@ export default function AdminPanel({
                       <select
                         value={reviewCategory}
                         onChange={(e) => setReviewCategory(e.target.value as any)}
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                       >
                         {REVIEW_CATEGORIES.map((c) => (
                           <option key={c} value={c}>
@@ -960,7 +976,7 @@ export default function AdminPanel({
                         max="5"
                         value={reviewRating}
                         onChange={(e) => setReviewRating(parseFloat(e.target.value) || 4.6)}
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
@@ -970,7 +986,7 @@ export default function AdminPanel({
                         type="number"
                         value={reviewLikes}
                         onChange={(e) => setReviewLikes(parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
@@ -981,7 +997,7 @@ export default function AdminPanel({
                         value={reviewHighlight}
                         onChange={(e) => setReviewHighlight(e.target.value)}
                         placeholder="e.g. 1.2M Views Viral TikTok Campaign"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
 
@@ -992,7 +1008,7 @@ export default function AdminPanel({
                         value={reviewComment}
                         onChange={(e) => setReviewComment(e.target.value)}
                         placeholder="Write client testimonial text..."
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                       />
                     </div>
                   </div>
@@ -1012,7 +1028,7 @@ export default function AdminPanel({
                   <button
                     type="submit"
                     disabled={isSubmittingReview}
-                    className="w-full py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 active:scale-98"
                   >
                     {isSubmittingReview ? "Saving to Cloud..." : "Save Testimonial to Cloud"}
                   </button>
@@ -1025,8 +1041,8 @@ export default function AdminPanel({
           {/* TAB 3: CONTACT & SOCIALS */}
           {/* ================================================================ */}
           {activeTab === "contact" && (
-            <form onSubmit={handleSaveContact} className="space-y-5 max-w-2xl mx-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <form onSubmit={handleSaveContact} className="space-y-4 max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-800 gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-white">Contact Information & Links</h3>
                   <p className="text-[11px] text-slate-400">
@@ -1036,7 +1052,7 @@ export default function AdminPanel({
                 <button
                   type="submit"
                   disabled={isSavingContact}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                  className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50 active:scale-98"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{isSavingContact ? "Saving..." : "Save Changes"}</span>
@@ -1050,8 +1066,8 @@ export default function AdminPanel({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">
                     Telegram Username
                   </label>
@@ -1062,11 +1078,11 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, telegramUsername: e.target.value })
                     }
                     placeholder="Ak_clips"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">
                     Telegram Direct Link URL
                   </label>
@@ -1077,11 +1093,11 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, telegramUrl: e.target.value })
                     }
                     placeholder="https://t.me/Ak_clips"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">Email Address</label>
                   <input
                     type="email"
@@ -1090,11 +1106,11 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, email: e.target.value })
                     }
                     placeholder="abiyketema21@gmail.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">Phone Number</label>
                   <input
                     type="text"
@@ -1103,11 +1119,11 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, phone: e.target.value })
                     }
                     placeholder="+251-934681880"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">Location</label>
                   <input
                     type="text"
@@ -1116,11 +1132,11 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, location: e.target.value })
                     }
                     placeholder="Addis Ababa, Ethiopia"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">
                     LinkedIn Profile URL
                   </label>
@@ -1131,11 +1147,11 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, linkedinUrl: e.target.value })
                     }
                     placeholder="https://www.linkedin.com/in/..."
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     YouTube Channel URL
                   </label>
@@ -1146,7 +1162,7 @@ export default function AdminPanel({
                       setContactForm({ ...contactForm, youtubeChannelUrl: e.target.value })
                     }
                     placeholder="https://youtube.com/@musikana1"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
               </div>
@@ -1157,8 +1173,8 @@ export default function AdminPanel({
           {/* TAB 4: WRITTEN CONTENT & COPY */}
           {/* ================================================================ */}
           {activeTab === "content" && (
-            <form onSubmit={handleSaveContent} className="space-y-5 max-w-2xl mx-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <form onSubmit={handleSaveContent} className="space-y-4 max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-800 gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-white">Website Text & Copywriting</h3>
                   <p className="text-[11px] text-slate-400">
@@ -1168,7 +1184,7 @@ export default function AdminPanel({
                 <button
                   type="submit"
                   disabled={isSavingContent}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                  className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C8102E] hover:bg-[#b00e27] text-white text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50 active:scale-98"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{isSavingContent ? "Saving..." : "Save Changes"}</span>
@@ -1182,28 +1198,28 @@ export default function AdminPanel({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">Brand Name</label>
                   <input
                     type="text"
                     value={contentForm.name}
                     onChange={(e) => setContentForm({ ...contentForm, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">Full Name</label>
                   <input
                     type="text"
                     value={contentForm.fullName}
                     onChange={(e) => setContentForm({ ...contentForm, fullName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     Badge / Profession Title
                   </label>
@@ -1211,21 +1227,21 @@ export default function AdminPanel({
                     type="text"
                     value={contentForm.badgeText}
                     onChange={(e) => setContentForm({ ...contentForm, badgeText: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">Hero Tagline</label>
                   <input
                     type="text"
                     value={contentForm.tagline}
                     onChange={(e) => setContentForm({ ...contentForm, tagline: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     Hero Section Description
                   </label>
@@ -1235,23 +1251,23 @@ export default function AdminPanel({
                     onChange={(e) =>
                       setContentForm({ ...contentForm, heroDescription: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
                 {/* Numeric Stats */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">Rating Display</label>
                   <input
                     type="text"
                     value={contentForm.rating}
                     onChange={(e) => setContentForm({ ...contentForm, rating: e.target.value })}
                     placeholder="4.6"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-medium text-slate-300">
                     Years Experience
                   </label>
@@ -1262,11 +1278,11 @@ export default function AdminPanel({
                       setContentForm({ ...contentForm, experienceYears: e.target.value })
                     }
                     placeholder="3+ Yrs"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     Total Reach / Views
                   </label>
@@ -1275,12 +1291,12 @@ export default function AdminPanel({
                     value={contentForm.totalViews}
                     onChange={(e) => setContentForm({ ...contentForm, totalViews: e.target.value })}
                     placeholder="5M+"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
                 {/* About Bio Section */}
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     About Section — Paragraph 1
                   </label>
@@ -1290,11 +1306,11 @@ export default function AdminPanel({
                     onChange={(e) =>
                       setContentForm({ ...contentForm, aboutDescription1: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     About Section — Paragraph 2
                   </label>
@@ -1304,12 +1320,12 @@ export default function AdminPanel({
                     onChange={(e) =>
                       setContentForm({ ...contentForm, aboutDescription2: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
                 {/* Contact Section Call to Action */}
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     Contact Section Header Title
                   </label>
@@ -1319,11 +1335,11 @@ export default function AdminPanel({
                     onChange={(e) =>
                       setContentForm({ ...contentForm, contactSectionTitle: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300">
                     Contact Section Subtitle
                   </label>
@@ -1333,7 +1349,7 @@ export default function AdminPanel({
                     onChange={(e) =>
                       setContentForm({ ...contentForm, contactSectionSubtitle: e.target.value })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8102E]"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
               </div>
