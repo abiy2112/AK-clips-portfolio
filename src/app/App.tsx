@@ -20,6 +20,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import imageme from "../img/me.jpg";
 import imagechan from "../img/channels4_profile.jpg";
+import ClientReviews from "./components/ClientReviews";
 
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
@@ -179,6 +180,9 @@ export default function App() {
             </a>
             <a href="#projects" className="hover:text-red-400 transition-colors">
               Projects
+            </a>
+            <a href="#reviews" className="hover:text-red-400 transition-colors">
+              Reviews
             </a>
             <a href="#contact" className="hover:text-red-400 transition-colors">
               Contact
@@ -480,6 +484,9 @@ export default function App() {
           </p>
         </div>
       </section>
+
+      {/* Client Comments & Reviews */}
+      <ClientReviews />
 
       {/* Education */}
       <section className="py-24 px-4 max-w-4xl mx-auto">
