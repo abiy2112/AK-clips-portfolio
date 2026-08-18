@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "ak-clips",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
