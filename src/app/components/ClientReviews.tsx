@@ -7,13 +7,12 @@ import {
   CheckCircle2,
   Send,
   Plus,
-  Filter,
   Film,
   TrendingUp,
   Clock,
-  User,
   Quote,
   X,
+  ShieldCheck,
 } from "lucide-react";
 
 export interface ReviewItem {
@@ -21,7 +20,8 @@ export interface ReviewItem {
   name: string;
   role: string;
   companyOrHandle?: string;
-  avatarColor: string;
+  avatarBg: string;
+  avatarText: string;
   rating: number;
   category: "TikTok & Reels" | "YouTube & Music" | "Real Estate & Promo" | "Other";
   date: string;
@@ -38,90 +38,96 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     name: "Orbit Rise",
     role: "TikTok Content Creator",
     companyOrHandle: "@orbitrise",
-    avatarColor: "from-cyan-500 to-blue-600",
-    rating: 5,
+    avatarBg: "bg-slate-800 border-slate-700",
+    avatarText: "text-cyan-400",
+    rating: 4.8,
     category: "TikTok & Reels",
     date: "2 weeks ago",
     comment:
       "Abiy transformed our raw footage into high-retention viral TikTok clips! His pacing, caption animations, and sound effects brought our engagement to a whole new level. Super fast turnaround too!",
     verified: true,
     projectHighlight: "Viral TikTok Series (1M+ views)",
-    likes: 24,
+    likes: 6,
   },
   {
     id: "rev-2",
     name: "Blue Sky Properties",
     role: "Marketing Director",
     companyOrHandle: "Real Estate Agency",
-    avatarColor: "from-emerald-500 to-teal-600",
-    rating: 5,
+    avatarBg: "bg-slate-800 border-slate-700",
+    avatarText: "text-rose-400",
+    rating: 4.6,
     category: "Real Estate & Promo",
     date: "1 month ago",
     comment:
       "Working with Abiy on our luxury property promotional videos was seamless. He has an incredible eye for color grading, smooth cinematic transitions, and impactful script pacing. Highly recommended for commercial edits!",
     verified: true,
     projectHighlight: "Commercial Property Showcase",
-    likes: 19,
+    likes: 5,
   },
   {
     id: "rev-3",
     name: "Abela G.",
     role: "Influencer & Entertainer",
     companyOrHandle: "@abela_.g",
-    avatarColor: "from-purple-500 to-pink-600",
-    rating: 5,
+    avatarBg: "bg-slate-800 border-slate-700",
+    avatarText: "text-amber-400",
+    rating: 4.7,
     category: "TikTok & Reels",
     date: "1 month ago",
     comment:
-      "Abiy knows exactly what makes social media video click. He catches the beat drops perfectly and keeps viewers hooked from the first 2 seconds. Best video editor I've worked with in Addis!",
+      "Abiy knows exactly what makes social media video click. He catches the beat drops perfectly and keeps viewers hooked from the first 2 seconds. Best video editor I've worked with!",
     verified: true,
     projectHighlight: "Short Form Entertainment Series",
-    likes: 31,
+    likes: 8,
   },
   {
     id: "rev-4",
     name: "Dagim Shumey",
     role: "Digital Creator",
     companyOrHandle: "@dagimshumey_",
-    avatarColor: "from-orange-500 to-amber-600",
-    rating: 5,
+    avatarBg: "bg-slate-800 border-slate-700",
+    avatarText: "text-purple-400",
+    rating: 4.5,
     category: "TikTok & Reels",
     date: "2 months ago",
     comment:
-      "Great communication, attention to details, and very creative visual rhythm. Whenever I hand over a script or raw video, Abiy always exceeds expectations with the final cut.",
+      "Great communication, attention to details, and very creative visual rhythm. Whenever I hand over a script or raw video, Abiy always delivers beyond expectations.",
     verified: true,
     projectHighlight: "Lifestyle & Vlog Edits",
-    likes: 15,
+    likes: 4,
   },
   {
     id: "rev-5",
     name: "MUSIKANA Community",
     role: "Channel Co-Producer",
     companyOrHandle: "YouTube (8K+ Subs)",
-    avatarColor: "from-red-500 to-rose-600",
-    rating: 5,
+    avatarBg: "bg-slate-800 border-slate-700",
+    avatarText: "text-red-400",
+    rating: 4.6,
     category: "YouTube & Music",
     date: "3 months ago",
     comment:
-      "His work on the Amharic lyrics videos and motion typography is breathtaking. Every frame feels synchronized to the rhythm and emotion of the music. Pure artistic storytelling!",
+      "His work on the Amharic lyrics videos and motion typography is breathtaking. Every frame feels synchronized to the rhythm and emotion of the music. Pure artistic storytelling by Abiy!",
     verified: true,
     projectHighlight: "Cinematic Lyrics Video Stream",
-    likes: 42,
+    likes: 9,
   },
   {
     id: "rev-6",
     name: "4 Kilo Gbi Gubae",
     role: "Media Coordinator",
     companyOrHandle: "Channel Production",
-    avatarColor: "from-violet-500 to-indigo-600",
-    rating: 5,
+    avatarBg: "bg-slate-800 border-slate-700",
+    avatarText: "text-emerald-400",
+    rating: 4.5,
     category: "YouTube & Music",
     date: "Recent",
     comment:
-      "Outstanding color correction and script adaptation. Abiy manages large multi-cam footage efficiently and delivers broadcast-ready videos right on schedule.",
+      "Outstanding color correction and script adaptation. Abiy manages multi-cam footage efficiently and delivers broadcast-ready videos right on schedule.",
     verified: true,
     projectHighlight: "Documentary & Event Videos",
-    likes: 18,
+    likes: 5,
   },
 ];
 
@@ -135,7 +141,7 @@ const CATEGORIES = [
 export default function ClientReviews() {
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
     try {
-      const saved = localStorage.getItem("ak_portfolio_client_reviews");
+      const saved = localStorage.getItem("ak_portfolio_client_reviews_v4");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -143,7 +149,7 @@ export default function ClientReviews() {
         }
       }
     } catch {
-      // fallback to initial
+      // fallback
     }
     return INITIAL_REVIEWS;
   });
@@ -152,7 +158,7 @@ export default function ClientReviews() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [likedReviews, setLikedReviews] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem("ak_portfolio_liked_reviews");
+      const saved = localStorage.getItem("ak_portfolio_liked_reviews_v4");
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -165,7 +171,7 @@ export default function ClientReviews() {
     role: "",
     companyOrHandle: "",
     category: "TikTok & Reels" as ReviewItem["category"],
-    rating: 5,
+    rating: 4.6,
     comment: "",
     projectHighlight: "",
   });
@@ -178,7 +184,7 @@ export default function ClientReviews() {
   useEffect(() => {
     try {
       localStorage.setItem(
-        "ak_portfolio_client_reviews",
+        "ak_portfolio_client_reviews_v4",
         JSON.stringify(reviews)
       );
     } catch {
@@ -190,7 +196,7 @@ export default function ClientReviews() {
   useEffect(() => {
     try {
       localStorage.setItem(
-        "ak_portfolio_liked_reviews",
+        "ak_portfolio_liked_reviews_v4",
         JSON.stringify(likedReviews)
       );
     } catch {
@@ -230,21 +236,11 @@ export default function ClientReviews() {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.comment.trim()) {
-      setFormError("Please fill in your name and comment.");
+      setFormError("Please fill in your name and review comment.");
       return;
     }
     setFormError("");
     setIsSubmitting(true);
-
-    // Color palettes for new comments
-    const colors = [
-      "from-rose-500 to-red-600",
-      "from-purple-500 to-indigo-600",
-      "from-cyan-500 to-blue-600",
-      "from-emerald-500 to-teal-600",
-      "from-amber-500 to-orange-600",
-    ];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
     setTimeout(() => {
       const newReview: ReviewItem = {
@@ -252,7 +248,8 @@ export default function ClientReviews() {
         name: formData.name.trim(),
         role: formData.role.trim() || "Client / Creator",
         companyOrHandle: formData.companyOrHandle.trim() || undefined,
-        avatarColor: randomColor,
+        avatarBg: "bg-slate-800 border-slate-700",
+        avatarText: "text-cyan-400",
         rating: formData.rating,
         category: formData.category,
         date: "Just now",
@@ -271,7 +268,7 @@ export default function ClientReviews() {
         role: "",
         companyOrHandle: "",
         category: "TikTok & Reels",
-        rating: 5,
+        rating: 4.6,
         comment: "",
         projectHighlight: "",
       });
@@ -288,198 +285,186 @@ export default function ClientReviews() {
       ? reviews
       : reviews.filter((r) => r.category === activeCategory);
 
-  const averageRating = (
-    reviews.reduce((acc, curr) => acc + curr.rating, 0) / (reviews.length || 1)
-  ).toFixed(1);
+  const officialRating = "4.6";
 
   return (
-    <section id="reviews" className="py-24 px-4 relative overflow-hidden">
-      {/* Background glow accents */}
-      <div className="absolute top-1/2 -left-32 w-96 h-96 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-10 -right-32 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+    <section id="reviews" className="py-20 px-4 relative">
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Section Header */}
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-500/10 via-purple-500/10 to-blue-500/10 border border-white/10 rounded-full px-4 py-2 mb-4">
-                <Sparkles className="w-4 h-4 text-red-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
-                  Client Feedback & Testimonials
-                </span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-medium mb-3">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Verified Client Testimonials</span>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-red-500/20 to-purple-500/20 backdrop-blur-xl border border-white/10 rounded-2xl">
-                  <MessageSquareQuote className="w-6 h-6 text-red-400" />
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-950/40 border border-red-800/40 text-red-400">
+                  <MessageSquareQuote className="w-5 h-5" />
                 </div>
-                <h2 className="text-3xl md:text-5xl font-black text-white">
-                  Client{" "}
-                  <span className="bg-gradient-to-r from-red-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-                    Reviews
-                  </span>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                  Client <span className="text-cyan-400">Reviews</span>
                 </h2>
               </div>
-              <p className="text-zinc-400 mt-3 max-w-xl text-base">
-                Discover what creators, channels, and businesses say about collaborating on high-impact video projects.
+              <p className="text-slate-400 mt-2 max-w-xl text-sm">
+                Feedback from content creators, channels, and commercial clients edited by <span className="text-slate-200 font-medium">Abiy</span>.
               </p>
             </div>
 
             {/* Leave a Comment CTA Button */}
             <button
               onClick={() => setIsFormOpen((prev) => !prev)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-red-500 via-purple-600 to-blue-600 hover:from-red-600 hover:via-purple-700 hover:to-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 hover:shadow-red-500/30 hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20 self-start md:self-auto cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm self-start md:self-auto cursor-pointer"
             >
               {isFormOpen ? (
                 <>
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                   <span>Close Form</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-5 h-5" />
-                  <span>Leave a Comment</span>
+                  <Plus className="w-4 h-4" />
+                  <span>Leave a Review</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {/* Social Proof / Stats Banner */}
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl">
-            <div className="flex items-center gap-3.5 p-2">
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+        {/* 4.6 Rating & Clean Stats Banner */}
+        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-slate-800">
+            {/* 4.6 Overall Rating Card */}
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60">
+              <div className="p-2.5 rounded-xl bg-slate-800 text-amber-400">
+                <Star className="w-5 h-5 fill-amber-400" />
               </div>
               <div>
-                <div className="text-2xl font-black text-white flex items-center gap-1">
-                  {averageRating}{" "}
-                  <span className="text-amber-400 text-base">/ 5.0</span>
+                <div className="text-xl sm:text-2xl font-bold text-white flex items-center gap-1">
+                  {officialRating}
+                  <span className="text-xs text-slate-400 font-normal">/ 5.0</span>
                 </div>
-                <div className="text-xs text-zinc-400">Average Rating</div>
+                <div className="text-[11px] text-slate-400">Average Rating</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3.5 p-2">
-              <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20">
-                <Film className="w-5 h-5 text-purple-400" />
+            {/* Projects Delivered */}
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60">
+              <div className="p-2.5 rounded-xl bg-slate-800 text-slate-300">
+                <Film className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl font-black text-white">25+</div>
-                <div className="text-xs text-zinc-400">Projects Delivered</div>
+                <div className="text-xl sm:text-2xl font-bold text-white">25+</div>
+                <div className="text-[11px] text-slate-400">Projects Delivered</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3.5 p-2">
-              <div className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/20">
-                <TrendingUp className="w-5 h-5 text-cyan-400" />
+            {/* Views Generated (Updated to 5M+) */}
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60">
+              <div className="p-2.5 rounded-xl bg-slate-800 text-red-400">
+                <TrendingUp className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl font-black text-white">8M+</div>
-                <div className="text-xs text-zinc-400">Combined Views</div>
+                <div className="text-xl sm:text-2xl font-bold text-white">5M+</div>
+                <div className="text-[11px] text-slate-400">Combined Views</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3.5 p-2">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <Clock className="w-5 h-5 text-emerald-400" />
+            {/* On-Time Delivery */}
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60">
+              <div className="p-2.5 rounded-xl bg-slate-800 text-emerald-400">
+                <Clock className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl font-black text-white">100%</div>
-                <div className="text-xs text-zinc-400">On-Time Delivery</div>
+                <div className="text-xl sm:text-2xl font-bold text-white">100%</div>
+                <div className="text-[11px] text-slate-400">On-Time Delivery</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Interactive Comment Submission Form */}
+        {/* Interactive Review Form */}
         {isFormOpen && (
-          <div className="mb-14 fade-up opacity-0 translate-y-8 transition-all duration-700 animate-in">
-            <div className="relative p-6 md:p-8 bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-zinc-950/90 backdrop-blur-2xl border border-white/15 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-red-500/20 rounded-xl border border-red-500/30 text-red-400">
-                    <Quote className="w-5 h-5" />
+          <div className="mb-10 fade-up opacity-0 translate-y-8 transition-all duration-700 animate-in">
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 md:p-6">
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-red-950/40 rounded-lg text-red-400">
+                    <Quote className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">
-                      Share Your Experience
+                    <h3 className="text-base font-bold text-white">
+                      Leave a Review for Abiy
                     </h3>
-                    <p className="text-xs text-zinc-400">
-                      Your feedback will appear immediately in the client comments section below.
+                    <p className="text-xs text-slate-400">
+                      Your feedback will appear immediately below.
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {submittedSuccess ? (
-                <div className="py-12 text-center flex flex-col items-center justify-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-bounce">
-                    <CheckCircle2 className="w-8 h-8" />
+                <div className="py-6 text-center flex flex-col items-center justify-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-950/40 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
+                    <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h4 className="text-2xl font-bold text-white">
+                  <h4 className="text-lg font-bold text-white">
                     Thank you for your review!
                   </h4>
-                  <p className="text-sm text-zinc-400">
-                    Your comment has been added to the feedback feed.
+                  <p className="text-xs text-slate-400">
+                    Your testimonial has been added.
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleFormSubmit} className="space-y-6">
+                <form onSubmit={handleFormSubmit} className="space-y-4">
                   {formError && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl">
+                    <div className="p-3 bg-red-950/40 border border-red-800 text-red-300 text-xs rounded-lg">
                       {formError}
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-medium text-slate-300 mb-1.5">
                         Your Name *
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Dawit Alemayehu"
+                        required
                         value={formData.name}
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
-                        required
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 transition-all text-sm"
+                        placeholder="e.g. Samuel T."
+                        className="w-full px-3.5 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                        Role / Channel / Handle
+                      <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                        Role or Channel Handle
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Creator (@handle) or Brand Manager"
                         value={formData.companyOrHandle}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            companyOrHandle: e.target.value,
-                          })
+                          setFormData({ ...formData, companyOrHandle: e.target.value })
                         }
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 transition-all text-sm"
+                        placeholder="e.g. @contentcreator or YouTube Channel"
+                        className="w-full px-3.5 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-500"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-medium text-slate-300 mb-1.5">
                         Project Category
                       </label>
                       <select
@@ -490,115 +475,68 @@ export default function ClientReviews() {
                             category: e.target.value as ReviewItem["category"],
                           })
                         }
-                        className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 transition-all text-sm"
+                        className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-500"
                       >
                         <option value="TikTok & Reels">TikTok & Reels</option>
                         <option value="YouTube & Music">YouTube & Music</option>
-                        <option value="Real Estate & Promo">
-                          Real Estate & Promo
-                        </option>
-                        <option value="Other">Other Creative Project</option>
+                        <option value="Real Estate & Promo">Real Estate & Promo</option>
+                        <option value="Other">Other Video Project</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                        Rating
+                      <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                        Rating Score: <span className="text-amber-400 font-semibold">{formData.rating} Stars</span>
                       </label>
-                      <div className="flex items-center gap-2 py-2">
-                        {[1, 2, 3, 4, 5].map((star) => {
-                          const isActive =
-                            (hoverRating !== null
-                              ? hoverRating
-                              : formData.rating) >= star;
-                          return (
-                            <button
-                              type="button"
-                              key={star}
-                              onMouseEnter={() => setHoverRating(star)}
-                              onMouseLeave={() => setHoverRating(null)}
-                              onClick={() =>
-                                setFormData({ ...formData, rating: star })
-                              }
-                              className="p-1 text-zinc-500 hover:scale-125 transition-transform cursor-pointer"
-                            >
-                              <Star
-                                className={`w-6 h-6 transition-colors ${
-                                  isActive
-                                    ? "text-amber-400 fill-amber-400"
-                                    : "text-zinc-600"
-                                }`}
-                              />
-                            </button>
-                          );
-                        })}
-                        <span className="text-sm font-bold text-amber-400 ml-2">
-                          {hoverRating !== null
-                            ? hoverRating
-                            : formData.rating}{" "}
-                          / 5
-                        </span>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, rating: star })}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(null)}
+                            className="p-1 text-slate-600 hover:text-amber-400 transition-colors cursor-pointer"
+                          >
+                            <Star
+                              className={`w-5 h-5 ${
+                                (hoverRating !== null
+                                  ? star <= hoverRating
+                                  : star <= formData.rating)
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-slate-700"
+                              }`}
+                            />
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                      Project Highlight / Type (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. TikTok Ad Campaign, YouTube Mini-Doc, Music Video"
-                      value={formData.projectHighlight}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          projectHighlight: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 transition-all text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                      Your Comment / Review *
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                      Your Feedback / Review *
                     </label>
                     <textarea
-                      rows={4}
-                      placeholder="Share your thoughts on the collaboration, editing quality, turnaround time, or storytelling..."
+                      required
+                      rows={3}
                       value={formData.comment}
                       onChange={(e) =>
                         setFormData({ ...formData, comment: e.target.value })
                       }
-                      required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 transition-all text-sm resize-none"
+                      placeholder="Describe your editing experience with Abiy..."
+                      className="w-full px-3.5 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-500 resize-none"
                     ></textarea>
                   </div>
 
-                  <div className="flex items-center justify-end gap-4 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsFormOpen(false)}
-                      className="px-6 py-3 rounded-xl border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-red-500 via-purple-600 to-blue-600 hover:from-red-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg shadow-red-500/25 hover:shadow-red-500/40 hover:scale-105 active:scale-95 transition-all text-sm cursor-pointer disabled:opacity-50"
-                    >
-                      {isSubmitting ? (
-                        <span>Posting...</span>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span>Publish Comment</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isSubmitting ? "Submitting Review..." : "Publish Review"}</span>
+                  </button>
                 </form>
               )}
             </div>
@@ -606,159 +544,111 @@ export default function ClientReviews() {
         )}
 
         {/* Category Filters */}
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-8">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <Filter className="w-4 h-4 text-zinc-500 mr-2 shrink-0" />
+        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-6">
+          <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   activeCategory === cat
-                    ? "bg-white text-zinc-950 shadow-lg shadow-white/10 scale-105 font-bold"
-                    : "bg-white/5 border border-white/10 text-zinc-400 hover:bg-white/10 hover:text-zinc-200"
+                    ? "bg-slate-800 text-white border border-slate-700"
+                    : "bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/80"
                 }`}
               >
                 {cat}
-                {cat === "All" && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] bg-red-500/20 text-red-300">
-                    {reviews.length}
-                  </span>
-                )}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Testimonials Card Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredReviews.map((rev, idx) => {
-            const isLiked = !!likedReviews[rev.id];
-            const initials = rev.name
-              .split(" ")
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
-
-            return (
-              <div
-                key={rev.id}
-                className={`fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-${
-                  (idx % 4) * 100
-                }`}
-              >
-                <div className="relative h-full flex flex-col justify-between p-7 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl hover:border-red-500/30 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-300 group overflow-hidden">
-                  {/* Subtle hover glow */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-500/10 to-purple-500/0 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
-                  <div>
-                    {/* Top row: Avatar, Name, Category & Verified tag */}
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-3.5">
-                        <div
-                          className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${rev.avatarColor} flex items-center justify-center font-black text-white text-base shadow-lg shadow-black/40 border border-white/20`}
-                        >
-                          {initials || <User className="w-5 h-5" />}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h4 className="text-white font-bold text-base group-hover:text-red-400 transition-colors">
-                              {rev.name}
-                            </h4>
-                            {rev.verified && (
-                              <CheckCircle2
-                                className="w-4 h-4 text-blue-400 shrink-0"
-                                title="Verified Client / Collaboration"
-                              />
-                            )}
-                          </div>
-                          <p className="text-xs text-zinc-400">
-                            {rev.companyOrHandle || rev.role}
-                          </p>
-                        </div>
-                      </div>
-
-                      <span className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-full text-[11px] font-medium text-zinc-400 shrink-0">
-                        {rev.date}
+        {/* Reviews Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredReviews.map((item, idx) => (
+            <div
+              key={item.id}
+              className={`fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-${
+                idx * 100
+              }`}
+            >
+              <div className="bg-slate-900/85 rounded-xl border border-slate-800 hover:border-slate-700 p-4 sm:p-5 h-full flex flex-col justify-between transition-colors">
+                <div>
+                  {/* Top Bar with rating & date */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3.5 h-3.5 ${
+                            i < Math.floor(item.rating)
+                              ? "text-amber-400 fill-amber-400"
+                              : i < item.rating
+                              ? "text-amber-400 fill-amber-400/50"
+                              : "text-slate-700"
+                          }`}
+                        />
+                      ))}
+                      <span className="text-xs font-semibold text-white ml-1">
+                        {item.rating}
                       </span>
                     </div>
 
-                    {/* Star Rating & Project Tag */}
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < rev.rating
-                                ? "text-amber-400 fill-amber-400"
-                                : "text-zinc-700"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      {rev.projectHighlight && (
-                        <span className="text-[11px] font-medium text-zinc-400 bg-white/5 px-2.5 py-0.5 rounded-full truncate max-w-[150px]">
-                          {rev.projectHighlight}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Review Quote / Comment */}
-                    <p className="text-zinc-300 text-sm leading-relaxed mb-6 italic">
-                      "{rev.comment}"
-                    </p>
-                  </div>
-
-                  {/* Bottom row: Category badge & Like / Helpful button */}
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                    <span className="text-[11px] font-semibold tracking-wide uppercase text-zinc-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
-                      {rev.category}
+                    <span className="text-[11px] text-slate-400">
+                      {item.date}
                     </span>
-
-                    <button
-                      onClick={() => handleLike(rev.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer ${
-                        isLiked
-                          ? "bg-red-500/20 text-red-400 border border-red-500/40 scale-105"
-                          : "bg-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-white/10 border border-white/10"
-                      }`}
-                      title="Mark as helpful"
-                    >
-                      <ThumbsUp
-                        className={`w-3.5 h-3.5 ${
-                          isLiked ? "fill-red-400 text-red-400" : ""
-                        }`}
-                      />
-                      <span>Helpful ({rev.likes})</span>
-                    </button>
                   </div>
+
+                  {/* Comment Text */}
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-3">
+                    "{item.comment}"
+                  </p>
+
+                  {/* Project Highlight Badge if present */}
+                  {item.projectHighlight && (
+                    <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950/60 border border-slate-800 text-[10px] text-cyan-400">
+                      <Film className="w-3 h-3" />
+                      <span>{item.projectHighlight}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Author Info & Like Footer */}
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${item.avatarBg} ${item.avatarText} border`}
+                    >
+                      {item.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-white flex items-center gap-1">
+                        <span>{item.name}</span>
+                        {item.verified && (
+                          <ShieldCheck className="w-3 h-3 text-cyan-400" />
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {item.companyOrHandle || item.role}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleLike(item.id)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors cursor-pointer ${
+                      likedReviews[item.id]
+                        ? "bg-red-950/40 text-red-400 border border-red-800/40"
+                        : "bg-slate-950/60 text-slate-400 hover:text-white border border-slate-800"
+                    }`}
+                  >
+                    <ThumbsUp className="w-3 h-3" />
+                    <span className="text-[11px]">{item.likes}</span>
+                  </button>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
-
-        {/* Empty state if filtering yields no result */}
-        {filteredReviews.length === 0 && (
-          <div className="py-16 text-center bg-white/5 border border-white/10 rounded-3xl">
-            <MessageSquareQuote className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
-            <h4 className="text-lg font-bold text-white">No reviews found</h4>
-            <p className="text-zinc-400 text-sm mt-1">
-              Be the first to leave a comment for this category!
-            </p>
-            <button
-              onClick={() => {
-                setActiveCategory("All");
-                setIsFormOpen(true);
-              }}
-              className="mt-4 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all"
-            >
-              Write a Review
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

@@ -1,3 +1,85 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* Studio Animations */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-up.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* macOS Window Shell - Clean & Moderate */
+.macos-window {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.macos-titlebar {
+  background: rgba(30, 41, 59, 0.4);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+/* Hide scrollbars cleanly */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom Clean Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

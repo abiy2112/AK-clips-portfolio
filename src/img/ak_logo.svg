@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient for subtle depth -->
+    <linearGradient id="akRedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C71536" />
+      <stop offset="100%" stop-color="#A50E28" />
+    </linearGradient>
+    <!-- Cyan Glow for Play Button & Ring -->
+    <linearGradient id="cyanTealGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7CE8F8" />
+      <stop offset="100%" stop-color="#4FD1C5" />
+    </linearGradient>
+    <!-- Subtle Specular Sheen -->
+    <linearGradient id="specularSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.2" />
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Red Base Container -->
+  <rect width="500" height="500" rx="36" fill="url(#akRedGradient)" />
+  
+  <!-- Subtle Top Specular Glass Sheen -->
+  <rect width="500" height="250" rx="36" fill="url(#specularSheen)" />
+
+  <!-- AK Black Lettering Group -->
+  <g fill="#181617">
+    <!-- Letter A -->
+    <!-- Left diagonal leg of A -->
+    <polygon points="55,355 108,355 238,158 185,158" />
+    
+    <!-- Right vertical stem of A -->
+    <rect x="195" y="158" width="43" height="197" rx="2" />
+
+    <!-- Letter K -->
+    <!-- Left vertical stem of K -->
+    <rect x="258" y="158" width="43" height="197" rx="2" />
+    
+    <!-- Upper diagonal arm of K with curved stylish top right flick -->
+    <path d="M 301 240 L 405 142 C 418 138, 432 145, 428 160 C 424 174, 398 198, 365 230 L 301 292 Z" />
+    
+    <!-- Lower diagonal leg of K -->
+    <path d="M 324 260 L 436 348 C 448 358, 442 365, 426 360 L 301 278 Z" />
+  </g>
+
+  <!-- Cyan Play Button inside 'A' -->
+  <g transform="translate(195, 230)">
+    <!-- Play Triangle Container -->
+    <polygon points="0,0 48,26 0,52" fill="#132333" stroke="url(#cyanTealGlow)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" />
+  </g>
+
+  <!-- Cyan Focal Circle inside 'K' junction -->
+  <circle cx="304" cy="257" r="8.5" fill="#132333" stroke="url(#cyanTealGlow)" stroke-width="5" />
+</svg>
