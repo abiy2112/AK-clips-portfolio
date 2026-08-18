@@ -24,7 +24,6 @@ import { useEffect, useRef, useState } from "react";
 import imagechan from "../img/channels4_profile.jpg";
 import ClientReviews from "./components/ClientReviews";
 import MacOSMenuBar from "./components/MacOSMenuBar";
-import MacOSDock from "./components/MacOSDock";
 import MacOSWindow from "./components/MacOSWindow";
 import VideoStudioTimeline from "./components/VideoStudioTimeline";
 import FeaturedProjectsMarquee from "./components/FeaturedProjectsMarquee";
@@ -759,9 +758,6 @@ export default function App() {
           </div>
         </div>
       </footer>
-
-      {/* Floating macOS Dock */}
-      <MacOSDock onOpenUpload={handleOpenUpload} />
 
       {/* Security Gatekeeper Authorization Modal (Admin Only) */}
       <AdminAuthModal

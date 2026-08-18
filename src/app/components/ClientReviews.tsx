@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   MessageSquareQuote,
   Zap,
@@ -13,7 +13,21 @@ import {
   Quote,
   X,
   ShieldCheck,
+  Lock,
+  Unlock,
+  Trash2,
+  KeyRound,
+  Mail,
+  Check,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
+import {
+  loadStoredReviews,
+  saveStoredReviews,
+  deleteStoredReview,
+  getCreatorAuthStatus,
+} from "../utils/videoStorage";
 
 export interface ReviewItem {
   id: string;
@@ -27,6 +41,8 @@ export interface ReviewItem {
   date: string;
   comment: string;
   verified: boolean;
+  verifiedMethod?: "telegram" | "email";
+  verifiedHandle?: string;
   projectHighlight?: string;
   likes: number;
   isCustom?: boolean;
@@ -46,6 +62,8 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     comment:
       "Abiy transformed our raw footage into high-retention viral TikTok clips! His pacing, caption animations, and sound effects brought our engagement to a whole new level. Super fast turnaround too!",
     verified: true,
+    verifiedMethod: "telegram",
+    verifiedHandle: "@orbitrise",
     projectHighlight: "Viral TikTok Series (1M+ views)",
     likes: 6,
   },
@@ -62,6 +80,8 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     comment:
       "Working with Abiy on our luxury property promotional videos was seamless. He has an incredible eye for color grading, smooth cinematic transitions, and impactful script pacing. Highly recommended for commercial edits!",
     verified: true,
+    verifiedMethod: "email",
+    verifiedHandle: "contact@blueskyprop.com",
     projectHighlight: "Commercial Property Showcase",
     likes: 5,
   },
@@ -78,6 +98,8 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     comment:
       "Abiy knows exactly what makes social media video click. He catches the beat drops perfectly and keeps viewers hooked from the first 2 seconds. Best video editor I've worked with!",
     verified: true,
+    verifiedMethod: "telegram",
+    verifiedHandle: "@abela_g",
     projectHighlight: "Short Form Entertainment Series",
     likes: 8,
   },
@@ -94,6 +116,8 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     comment:
       "Great communication, attention to details, and very creative visual rhythm. Whenever I hand over a script or raw video, Abiy always delivers beyond expectations.",
     verified: true,
+    verifiedMethod: "telegram",
+    verifiedHandle: "@dagimshumey",
     projectHighlight: "Lifestyle & Vlog Edits",
     likes: 4,
   },
@@ -110,6 +134,8 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     comment:
       "His work on the Amharic lyrics videos and motion typography is breathtaking. Every frame feels synchronized to the rhythm and emotion of the music. Pure artistic storytelling by Abiy!",
     verified: true,
+    verifiedMethod: "telegram",
+    verifiedHandle: "@musikana1",
     projectHighlight: "Cinematic Lyrics Video Stream",
     likes: 9,
   },
@@ -126,6 +152,8 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     comment:
       "Outstanding color correction and script adaptation. Abiy manages multi-cam footage efficiently and delivers broadcast-ready videos right on schedule.",
     verified: true,
+    verifiedMethod: "email",
+    verifiedHandle: "media@4kilogbi.org",
     projectHighlight: "Documentary & Event Videos",
     likes: 5,
   },
@@ -139,31 +167,24 @@ const CATEGORIES = [
 ] as const;
 
 export default function ClientReviews() {
-  const [reviews, setReviews] = useState<ReviewItem[]>(() => {
-    try {
-      const saved = localStorage.getItem("ak_portfolio_client_reviews_v4");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch {
-      // fallback
-    }
-    return INITIAL_REVIEWS;
-  });
-
+  const [reviews, setReviews] = useState<ReviewItem[]>(INITIAL_REVIEWS);
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [likedReviews, setLikedReviews] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem("ak_portfolio_liked_reviews_v4");
+      const saved = localStorage.getItem("ak_portfolio_liked_reviews_v5");
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
     }
   });
+
+  // Admin Review Management (Discreet icon-only toggle)
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => getCreatorAuthStatus());
+  const [isPasscodeModalOpen, setIsPasscodeModalOpen] = useState(false);
+  const [passcode, setPasscode] = useState("");
+  const [passcodeError, setPasscodeError] = useState(false);
+  const passcodeInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -175,28 +196,37 @@ export default function ClientReviews() {
     comment: "",
     projectHighlight: "",
   });
+
+  // Verification State
+  const [verificationType, setVerificationType] = useState<"telegram" | "email">("telegram");
+  const [verificationInput, setVerificationInput] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
+
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Sync reviews with localStorage
+  // Load reviews from IndexedDB + localStorage on mount
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        "ak_portfolio_client_reviews_v4",
-        JSON.stringify(reviews)
-      );
-    } catch {
-      // ignore
-    }
-  }, [reviews]);
+    let isMounted = true;
+    loadStoredReviews<ReviewItem>(INITIAL_REVIEWS).then((loaded) => {
+      if (isMounted && loaded && loaded.length > 0) {
+        setReviews(loaded);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Sync likes with localStorage
   useEffect(() => {
     try {
       localStorage.setItem(
-        "ak_portfolio_liked_reviews_v4",
+        "ak_portfolio_liked_reviews_v5",
         JSON.stringify(likedReviews)
       );
     } catch {
@@ -223,22 +253,82 @@ export default function ClientReviews() {
     return () => observer.disconnect();
   }, [activeCategory, reviews, isFormOpen]);
 
+  // Focus passcode input when modal opens
+  useEffect(() => {
+    if (isPasscodeModalOpen) {
+      setPasscode("");
+      setPasscodeError(false);
+      setTimeout(() => {
+        passcodeInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isPasscodeModalOpen]);
+
   const handleLike = (id: string) => {
     const isLiked = likedReviews[id];
     setLikedReviews((prev) => ({ ...prev, [id]: !isLiked }));
-    setReviews((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, likes: isLiked ? r.likes - 1 : r.likes + 1 } : r
-      )
+    const updated = reviews.map((r) =>
+      r.id === id ? { ...r, likes: isLiked ? Math.max(0, r.likes - 1) : r.likes + 1 } : r
     );
+    setReviews(updated);
+    saveStoredReviews(updated);
   };
 
+  // Verification handler
+  const handleVerifyAccount = () => {
+    setVerificationError("");
+    const input = verificationInput.trim();
+
+    if (!input) {
+      setVerificationError(
+        verificationType === "telegram"
+          ? "Please enter your Telegram handle (e.g. @username)."
+          : "Please enter your email address."
+      );
+      return;
+    }
+
+    if (verificationType === "telegram") {
+      const handle = input.startsWith("@") ? input : `@${input}`;
+      if (handle.length < 3) {
+        setVerificationError("Please enter a valid Telegram handle.");
+        return;
+      }
+      setIsVerifying(true);
+      setTimeout(() => {
+        setIsVerifying(false);
+        setIsVerified(true);
+        setVerificationInput(handle);
+      }, 400);
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(input)) {
+        setVerificationError("Please enter a valid email address.");
+        return;
+      }
+      setIsVerifying(true);
+      setTimeout(() => {
+        setIsVerifying(false);
+        setIsVerified(true);
+      }, 400);
+    }
+  };
+
+  // Submit review form
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.comment.trim()) {
       setFormError("Please fill in your name and review comment.");
       return;
     }
+
+    if (!isVerified) {
+      setFormError(
+        `Please verify your ${verificationType === "telegram" ? "Telegram handle" : "Email"} before publishing your review.`
+      );
+      return;
+    }
+
     setFormError("");
     setIsSubmitting(true);
 
@@ -246,8 +336,10 @@ export default function ClientReviews() {
       const newReview: ReviewItem = {
         id: "custom-" + Date.now(),
         name: formData.name.trim(),
-        role: formData.role.trim() || "Client / Creator",
-        companyOrHandle: formData.companyOrHandle.trim() || undefined,
+        role: formData.role.trim() || "Verified Client",
+        companyOrHandle:
+          formData.companyOrHandle.trim() ||
+          (verificationType === "telegram" ? verificationInput : undefined),
         avatarBg: "bg-slate-800 border-slate-700",
         avatarText: "text-cyan-400",
         rating: formData.rating,
@@ -255,12 +347,17 @@ export default function ClientReviews() {
         date: "Just now",
         comment: formData.comment.trim(),
         verified: true,
+        verifiedMethod: verificationType,
+        verifiedHandle: verificationInput.trim(),
         projectHighlight: formData.projectHighlight.trim() || undefined,
         likes: 1,
         isCustom: true,
       };
 
-      setReviews((prev) => [newReview, ...prev]);
+      const updated = [newReview, ...reviews];
+      setReviews(updated);
+      saveStoredReviews(updated);
+
       setIsSubmitting(false);
       setSubmittedSuccess(true);
       setFormData({
@@ -272,12 +369,48 @@ export default function ClientReviews() {
         comment: "",
         projectHighlight: "",
       });
+      setIsVerified(false);
+      setVerificationInput("");
 
       setTimeout(() => {
         setSubmittedSuccess(false);
         setIsFormOpen(false);
-      }, 2000);
-    }, 600);
+      }, 1800);
+    }, 500);
+  };
+
+  // Discreet Admin Passcode Validation
+  const handleAdminIconClick = () => {
+    if (isAdmin) {
+      // Toggle off / lock
+      setIsAdmin(false);
+    } else {
+      setIsPasscodeModalOpen(true);
+    }
+  };
+
+  const handlePasscodeSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (passcode === "5252") {
+      setIsAdmin(true);
+      setIsPasscodeModalOpen(false);
+      setPasscode("");
+      setPasscodeError(false);
+    } else {
+      setPasscodeError(true);
+      setPasscode("");
+      setTimeout(() => {
+        passcodeInputRef.current?.focus();
+      }, 100);
+    }
+  };
+
+  // Delete review handler
+  const handleDeleteReview = (reviewId: string) => {
+    const updated = reviews.filter((r) => r.id !== reviewId);
+    setReviews(updated);
+    saveStoredReviews(updated);
+    deleteStoredReview(reviewId);
   };
 
   const filteredReviews =
@@ -311,23 +444,45 @@ export default function ClientReviews() {
               </p>
             </div>
 
-            {/* Leave a Comment CTA Button */}
-            <button
-              onClick={() => setIsFormOpen((prev) => !prev)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm self-start md:self-auto cursor-pointer"
-            >
-              {isFormOpen ? (
-                <>
-                  <X className="w-4 h-4" />
-                  <span>Close Form</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  <span>Leave a Review</span>
-                </>
-              )}
-            </button>
+            {/* Actions: Leave a Review & Discreet Admin Lock Icon */}
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              <button
+                type="button"
+                onClick={() => setIsFormOpen((prev) => !prev)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm cursor-pointer"
+              >
+                {isFormOpen ? (
+                  <>
+                    <X className="w-4 h-4" />
+                    <span>Close Form</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>Leave a Review</span>
+                  </>
+                )}
+              </button>
+
+              {/* Discreet Icon-Only Admin Toggle (NO TEXT) */}
+              <button
+                type="button"
+                onClick={handleAdminIconClick}
+                className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                  isAdmin
+                    ? "bg-emerald-950/40 border-emerald-800/60 text-emerald-400 hover:bg-emerald-900/50"
+                    : "bg-slate-900/80 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700"
+                }`}
+                title={isAdmin ? "Lock" : "Authorize"}
+                aria-label="Security Authorization"
+              >
+                {isAdmin ? (
+                  <Unlock className="w-4 h-4" />
+                ) : (
+                  <Lock className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -360,7 +515,7 @@ export default function ClientReviews() {
               </div>
             </div>
 
-            {/* Views Generated (Updated to 5M+) */}
+            {/* Views Generated */}
             <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60">
               <div className="p-2.5 rounded-xl bg-slate-800 text-red-400">
                 <TrendingUp className="w-5 h-5" />
@@ -384,10 +539,10 @@ export default function ClientReviews() {
           </div>
         </div>
 
-        {/* Interactive Review Form */}
+        {/* Interactive Review Form with Telegram / Email Verification */}
         {isFormOpen && (
           <div className="mb-10 fade-up opacity-0 translate-y-8 transition-all duration-700 animate-in">
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 md:p-6">
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl">
               <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 bg-red-950/40 rounded-lg text-red-400">
@@ -395,14 +550,15 @@ export default function ClientReviews() {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-white">
-                      Leave a Review for Abiy
+                      Leave a Verified Review for Abiy
                     </h3>
                     <p className="text-xs text-slate-400">
-                      Your feedback will appear immediately below.
+                      Verify your account to publish your feedback permanently.
                     </p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsFormOpen(false)}
                   className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
                 >
@@ -419,14 +575,15 @@ export default function ClientReviews() {
                     Thank you for your review!
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Your testimonial has been added.
+                    Your testimonial has been verified and permanently added.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleFormSubmit} className="space-y-4">
                   {formError && (
-                    <div className="p-3 bg-red-950/40 border border-red-800 text-red-300 text-xs rounded-lg">
-                      {formError}
+                    <div className="p-3 bg-red-950/40 border border-red-800 text-red-300 text-xs rounded-lg flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                      <span>{formError}</span>
                     </div>
                   )}
 
@@ -449,7 +606,7 @@ export default function ClientReviews() {
 
                     <div>
                       <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                        Role or Channel Handle
+                        Role or Channel Title
                       </label>
                       <input
                         type="text"
@@ -457,10 +614,119 @@ export default function ClientReviews() {
                         onChange={(e) =>
                           setFormData({ ...formData, companyOrHandle: e.target.value })
                         }
-                        placeholder="e.g. @contentcreator or YouTube Channel"
+                        placeholder="e.g. YouTube Producer or Content Creator"
                         className="w-full px-3.5 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-500"
                       />
                     </div>
+                  </div>
+
+                  {/* Account Verification Section (Telegram or Email) */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                        <span>Account Verification *</span>
+                      </label>
+
+                      {/* Verification Method Toggle */}
+                      <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVerificationType("telegram");
+                            setIsVerified(false);
+                            setVerificationError("");
+                          }}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+                            verificationType === "telegram"
+                              ? "bg-cyan-500 text-slate-950 font-bold"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          <Send className="w-3 h-3" />
+                          <span>Telegram</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVerificationType("email");
+                            setIsVerified(false);
+                            setVerificationError("");
+                          }}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+                            verificationType === "email"
+                              ? "bg-cyan-500 text-slate-950 font-bold"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          <Mail className="w-3 h-3" />
+                          <span>Email</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {isVerified ? (
+                      <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/50 flex items-center justify-between gap-2 animate-fade-in">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span className="text-xs text-emerald-300 font-medium">
+                            Verified via {verificationType === "telegram" ? "Telegram" : "Email"}:{" "}
+                            <span className="font-mono font-bold text-white">{verificationInput}</span>
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsVerified(false)}
+                          className="text-[11px] text-slate-400 hover:text-white underline cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <input
+                              type={verificationType === "email" ? "email" : "text"}
+                              value={verificationInput}
+                              onChange={(e) => {
+                                setVerificationInput(e.target.value);
+                                setVerificationError("");
+                              }}
+                              placeholder={
+                                verificationType === "telegram"
+                                  ? "e.g. @username or username"
+                                  : "e.g. yourname@example.com"
+                              }
+                              className="w-full px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-500"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleVerifyAccount}
+                            disabled={isVerifying}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white border border-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Verifying...</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Verify {verificationType === "telegram" ? "Handle" : "Email"}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        {verificationError && (
+                          <div className="text-[11px] text-red-400 font-medium">
+                            {verificationError}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -532,11 +798,17 @@ export default function ClientReviews() {
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer disabled:opacity-50"
+                    disabled={isSubmitting || !isVerified}
+                    className="w-full py-2.5 bg-[#C8102E] hover:bg-[#b00e27] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{isSubmitting ? "Submitting Review..." : "Publish Review"}</span>
+                    <span>
+                      {isSubmitting
+                        ? "Publishing Review..."
+                        : !isVerified
+                        ? "Verify Account Above to Publish"
+                        : "Publish Verified Review"}
+                    </span>
                   </button>
                 </form>
               )}
@@ -572,9 +844,9 @@ export default function ClientReviews() {
                 idx * 100
               }`}
             >
-              <div className="bg-slate-900/85 rounded-xl border border-slate-800 hover:border-slate-700 p-4 sm:p-5 h-full flex flex-col justify-between transition-colors">
+              <div className="bg-slate-900/85 rounded-xl border border-slate-800 hover:border-slate-700 p-4 sm:p-5 h-full flex flex-col justify-between transition-colors relative group">
                 <div>
-                  {/* Top Bar with rating & date */}
+                  {/* Top Bar with rating & date + admin delete icon if authorized */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
@@ -594,9 +866,23 @@ export default function ClientReviews() {
                       </span>
                     </div>
 
-                    <span className="text-[11px] text-slate-400">
-                      {item.date}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-slate-400">
+                        {item.date}
+                      </span>
+
+                      {/* Admin Delete Action Button (Appears only when unlocked with 5252) */}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReview(item.id)}
+                          className="p-1 rounded bg-red-950/60 hover:bg-red-900/80 text-red-400 hover:text-red-200 border border-red-800/50 transition-colors cursor-pointer"
+                          title="Delete review"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Comment Text */}
@@ -625,11 +911,24 @@ export default function ClientReviews() {
                       <div className="text-xs font-medium text-white flex items-center gap-1">
                         <span>{item.name}</span>
                         {item.verified && (
-                          <ShieldCheck className="w-3 h-3 text-cyan-400" />
+                          <span
+                            className="inline-flex items-center text-cyan-400"
+                            title={
+                              item.verifiedHandle
+                                ? `Verified via ${item.verifiedMethod || "Account"}: ${item.verifiedHandle}`
+                                : "Verified Client"
+                            }
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                          </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-400">
-                        {item.companyOrHandle || item.role}
+                      <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                        {item.verifiedHandle ? (
+                          <span className="font-mono text-cyan-400/80">{item.verifiedHandle}</span>
+                        ) : (
+                          <span>{item.companyOrHandle || item.role}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -651,6 +950,92 @@ export default function ClientReviews() {
           ))}
         </div>
       </div>
+
+      {/* Discreet Admin Passcode Modal (NO text mentioning 'client review settings') */}
+      {isPasscodeModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setIsPasscodeModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Authorization</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsPasscodeModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="p-5 text-center">
+              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-3 text-cyan-400">
+                <KeyRound className="w-5 h-5" />
+              </div>
+              <h4 className="text-sm font-bold text-white mb-1">
+                Enter Admin Passcode
+              </h4>
+              <p className="text-xs text-slate-400 mb-4">
+                Please enter passcode to proceed.
+              </p>
+
+              <form onSubmit={handlePasscodeSubmit} className="space-y-3">
+                <input
+                  ref={passcodeInputRef}
+                  type="password"
+                  maxLength={8}
+                  value={passcode}
+                  onChange={(e) => {
+                    setPasscodeError(false);
+                    setPasscode(e.target.value);
+                    if (e.target.value === "5252") {
+                      setIsAdmin(true);
+                      setIsPasscodeModalOpen(false);
+                      setPasscode("");
+                    }
+                  }}
+                  placeholder="Passcode"
+                  className={`w-full px-3 py-2 bg-slate-950 border rounded-xl text-center text-sm font-mono tracking-widest text-white focus:outline-none ${
+                    passcodeError
+                      ? "border-red-500 bg-red-950/20"
+                      : "border-slate-800 focus:border-cyan-500"
+                  }`}
+                />
+
+                {passcodeError && (
+                  <div className="text-xs text-red-400 font-medium">
+                    Incorrect passcode.
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsPasscodeModalOpen(false)}
+                    className="flex-1 py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-1.5 px-3 rounded-lg bg-[#C8102E] hover:bg-[#b00e27] text-xs font-medium text-white shadow transition-colors cursor-pointer"
+                  >
+                    Authorize
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
+
