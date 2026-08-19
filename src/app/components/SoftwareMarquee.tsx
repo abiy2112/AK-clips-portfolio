@@ -271,7 +271,7 @@ const SOFTWARE_TOOLS: SoftwareTool[] = [
     id: "mediaencoder",
     name: "Adobe Media Encoder",
     role: "Rendering & Pipeline",
-    highlight: "High-Bitrate 4K 60FPS",
+    highlight: "Master Video Export",
     accentColor: "#FFA000",
     badge: "Export",
     glowClass: "hover:border-[#FFA000]/80 hover:shadow-[0_0_25px_rgba(255,160,0,0.3)]",
@@ -630,7 +630,7 @@ export default function SoftwareMarquee() {
           <div className="flex items-center gap-2 text-slate-400">
             <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-400">
               <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span>4K 60FPS • Metal / CUDA</span>
+              <span>Hardware Accelerated</span>
             </span>
           </div>
         </div>

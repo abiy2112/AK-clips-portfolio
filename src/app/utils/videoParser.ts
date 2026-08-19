@@ -90,7 +90,7 @@ export function parseVideoSource(
       videoUrl: `https://drive.google.com/file/d/${gDriveId}/view`,
       embedUrl: `https://drive.google.com/file/d/${gDriveId}/preview`,
       thumbnailUrl: customThumbnail?.trim() || "",
-      duration: duration?.trim() || "4K Master",
+      duration: duration?.trim() || "Master Cut",
       sourceLabel: "Google Drive Master",
       isCustom: true,
       createdAt: timestamp,

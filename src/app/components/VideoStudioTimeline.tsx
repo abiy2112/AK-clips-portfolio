@@ -116,7 +116,7 @@ export default function VideoStudioTimeline() {
             </div>
             <div className="flex-1 h-7 bg-slate-950/60 rounded p-0.5 flex gap-1 relative border border-slate-800/60 overflow-hidden">
               <div className="w-[20%] h-full rounded bg-red-950/60 border border-red-800/50 flex items-center px-1.5 text-[9px] text-slate-200 font-medium truncate">
-                🎬 4K Cut
+                🎬 Main Cut
               </div>
               <div className="w-[28%] h-full rounded bg-red-950/70 border border-red-800/60 flex items-center px-1.5 text-[9px] text-slate-200 font-medium truncate">
                 🏙️ Property

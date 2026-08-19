@@ -442,7 +442,7 @@ export default function VideoUploadModal({
                     type="text"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
-                    placeholder="e.g. 0:45 • 4K"
+                    placeholder="e.g. 0:45 • HD"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                   />
                 </div>
@@ -551,7 +551,7 @@ export default function VideoUploadModal({
                         {title || "Untitled Project"}
                       </div>
                       <div className="text-[9px] text-slate-400 mt-0.5">
-                        AK clipps • {duration || "Featured 4K"}
+                        AK clipps • {duration || "Featured Video"}
                       </div>
                     </div>
                   </div>

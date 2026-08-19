@@ -213,7 +213,7 @@ export default function FeaturedProjectsMarquee({
             title="Cinematic Continuous Ticker"
           >
             <Film className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">Ticker</span>
+            <span className="hidden xs:inline">Stream</span>
           </button>
 
           <button
@@ -514,8 +514,8 @@ export default function FeaturedProjectsMarquee({
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 px-1 sm:px-2 pt-1">
         <span>
           {viewMode === "marquee"
-            ? "← Autoscrolling ticker • Tap any project to play in 4K theater • Drag/swipe to browse →"
-            : `Showing ${filteredProjects.length} of ${projects.length} project cuts`}
+            ? "Tap any project to play"
+            : `Showing ${filteredProjects.length} of ${projects.length} projects`}
         </span>
         {onOpenUpload && (
           <button
@@ -524,7 +524,7 @@ export default function FeaturedProjectsMarquee({
             className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-cyan-400 hover:text-white text-xs font-medium transition-colors cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
-            <span>Upload Another Video</span>
+            <span>Upload Video</span>
           </button>
         )}
       </div>

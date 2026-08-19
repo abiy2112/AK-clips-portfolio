@@ -213,8 +213,6 @@ export default function VideoPlayerModal({
           </div>
 
           <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-            <span>4K 60FPS</span>
-            <span>•</span>
             <span className="text-white font-medium">Abiy Ketema</span>
           </div>
         </div>
