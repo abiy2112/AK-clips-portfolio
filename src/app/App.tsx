@@ -44,6 +44,8 @@ import {
   saveProjectToCloud,
   deleteProjectFromCloud,
   subscribeToReviews,
+  subscribeToVlogs,
+  saveReviewToCloud,
 } from "./utils/cloudDB";
 import {
   subscribeToContactSettings,
@@ -52,6 +54,8 @@ import {
   DEFAULT_CONTENT_SETTINGS,
 } from "./utils/siteSettings";
 import { INITIAL_REVIEWS } from "./data/initialReviews";
+import VlogSection from "./components/VlogSection";
+import { VlogItem } from "./types/vlog";
 
 const DEFAULT_PROJECTS: ProjectItem[] = [
   {
@@ -98,6 +102,9 @@ export default function App() {
   // Reviews from Cloud Firestore
   const [reviews, setReviews] = useState<ReviewItem[]>(INITIAL_REVIEWS);
 
+  // Vlogs from Cloud Firestore
+  const [vlogs, setVlogs] = useState<VlogItem[]>([]);
+
   // Contact & Written Content settings from Cloud Firestore
   const [contactSettings, setContactSettings] = useState<SiteContactSettings>(DEFAULT_CONTACT_SETTINGS);
   const [contentSettings, setContentSettings] = useState<SiteContentSettings>(DEFAULT_CONTENT_SETTINGS);
@@ -122,6 +129,14 @@ export default function App() {
       if (cloudReviews.length > 0) {
         setReviews(cloudReviews);
       }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to vlogs from Firestore
+  useEffect(() => {
+    const unsubscribe = subscribeToVlogs((cloudVlogs) => {
+      setVlogs(cloudVlogs);
     });
     return () => unsubscribe();
   }, []);
@@ -160,7 +175,7 @@ export default function App() {
     return () => {
       observerRef.current?.disconnect();
     };
-  }, [projects, reviews, contentSettings]);
+  }, [projects, reviews, vlogs, contentSettings]);
 
   // Admin access handler (triggered by top lightning icon)
   const handleOpenAdmin = () => {
@@ -207,10 +222,20 @@ export default function App() {
       newReview,
       ...prev.filter((r) => r.id !== newReview.id),
     ]);
+    // Also save to cloud as a failsafe (AdminPanel also calls saveReviewToCloud)
+    saveReviewToCloud(newReview).catch(console.error);
   };
 
   const handleDeleteReview = (reviewId: string) => {
     setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+  };
+
+  const handleAddVlog = (newVlog: VlogItem) => {
+    setVlogs((prev) => [newVlog, ...prev.filter((v) => v.id !== newVlog.id)]);
+  };
+
+  const handleDeleteVlog = (vlogId: string) => {
+    setVlogs((prev) => prev.filter((v) => v.id !== vlogId));
   };
 
   const skills = [
@@ -468,14 +493,9 @@ export default function App() {
             <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
               <Play className="w-4 h-4 fill-slate-200" />
             </div>
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                Featured <span className="text-cyan-400">Projects</span>
-              </h2>
-              <p className="text-slate-400 text-xs mt-0.5">
-                Continuous ticker • Tap video card to watch
-              </p>
-            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+              Featured <span className="text-cyan-400">Projects</span>
+            </h2>
           </div>
         </div>
 
@@ -676,6 +696,9 @@ export default function App() {
         onDeleteReview={handleDeleteReview}
       />
 
+      {/* Vlog Section — Firestore-backed, permanent */}
+      <VlogSection vlogs={vlogs} />
+
       {/* Education */}
       <section className="py-8 sm:py-10 px-3 sm:px-4 max-w-4xl mx-auto relative z-10">
         <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
@@ -799,6 +822,7 @@ export default function App() {
         onClose={() => setIsAdminPanelOpen(false)}
         projects={projects}
         reviews={reviews}
+        vlogs={vlogs}
         contactSettings={contactSettings}
         contentSettings={contentSettings}
         onAddProject={handleAddProject}
@@ -806,6 +830,8 @@ export default function App() {
         onResetProjects={handleResetProjects}
         onAddReview={handleAddReview}
         onDeleteReview={handleDeleteReview}
+        onAddVlog={handleAddVlog}
+        onDeleteVlog={handleDeleteVlog}
         onLockSession={handleLockSession}
       />
 

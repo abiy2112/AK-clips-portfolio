@@ -26,6 +26,7 @@ import {
 import { db, storage } from "../firebase";
 import { ProjectItem } from "../types/project";
 import { ReviewItem } from "../types/review";
+import { VlogItem } from "../types/vlog";
 import { INITIAL_REVIEWS } from "../data/initialReviews";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -209,4 +210,48 @@ export async function loadReviewsOnce(): Promise<ReviewItem[]> {
   } catch {
     return [...INITIAL_REVIEWS];
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VLOGS — Firestore `vlogs` collection
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Subscribe to vlogs in real-time (newest first).
+ * Returns an unsubscribe function; call it on component unmount.
+ */
+export function subscribeToVlogs(
+  callback: (vlogs: VlogItem[]) => void
+): () => void {
+  const q = query(collection(db, "vlogs"), orderBy("createdAt", "desc"));
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const vlogs = snapshot.docs.map((d) => ({
+        ...(d.data() as Omit<VlogItem, "id">),
+        id: d.id,
+      })) as VlogItem[];
+      callback(vlogs);
+    },
+    (err) => {
+      console.error("[cloudDB] vlogs subscription error:", err);
+      callback([]);
+    }
+  );
+}
+
+/** Save (create or update) a vlog to Firestore. */
+export async function saveVlogToCloud(vlog: VlogItem): Promise<void> {
+  const { id, ...rest } = vlog;
+  await setDoc(doc(db, "vlogs", id), {
+    ...rest,
+    isCustom: true,
+    createdAt: vlog.createdAt ?? Date.now(),
+    updatedAt: Date.now(),
+  }, { merge: true });
+}
+
+/** Delete a vlog from Firestore. */
+export async function deleteVlogFromCloud(id: string): Promise<void> {
+  await deleteDoc(doc(db, "vlogs", id));
 }

@@ -165,6 +165,12 @@ export default function MacOSMenuBar({
                 </span>
               </a>
               <a
+                href="#vlogs"
+                className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
+              >
+                Vlogs
+              </a>
+              <a
                 href="#software"
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
@@ -332,6 +338,15 @@ export default function MacOSMenuBar({
               >
                 <Layers className="w-4 h-4 text-purple-400" />
                 <span>Skills & Software</span>
+              </a>
+
+              <a
+                href="#vlogs"
+                onClick={() => setShowMobileMenu(false)}
+                className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-600 flex items-center gap-2.5 text-xs font-semibold text-white transition-colors"
+              >
+                <Film className="w-4 h-4 text-amber-400" />
+                <span>Vlogs</span>
               </a>
 
               <a
