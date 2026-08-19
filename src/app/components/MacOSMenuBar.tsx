@@ -24,12 +24,14 @@ import AKLogo from "./AKLogo";
 interface MacOSMenuBarProps {
   activeSection?: string;
   onOpenAdmin?: () => void;
+  onSelectTab?: (tab: "projects" | "about" | "work" | "skills" | "reviews" | "vlogs") => void;
   rating?: string;
 }
 
 export default function MacOSMenuBar({
   activeSection = "hero",
   onOpenAdmin,
+  onSelectTab,
   rating = "4.6",
 }: MacOSMenuBarProps) {
   const [currentTime, setCurrentTime] = useState<string>("");
@@ -138,24 +140,35 @@ export default function MacOSMenuBar({
               </a>
               <a
                 href="#projects"
+                onClick={() => onSelectTab?.("projects")}
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
                 Projects
               </a>
               <a
+                href="#about"
+                onClick={() => onSelectTab?.("about")}
+                className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
+              >
+                About
+              </a>
+              <a
                 href="#work"
+                onClick={() => onSelectTab?.("work")}
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
                 Work
               </a>
               <a
                 href="#skills"
+                onClick={() => onSelectTab?.("skills")}
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
                 Skills
               </a>
               <a
                 href="#reviews"
+                onClick={() => onSelectTab?.("reviews")}
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-1"
               >
                 Reviews
@@ -166,15 +179,10 @@ export default function MacOSMenuBar({
               </a>
               <a
                 href="#vlogs"
+                onClick={() => onSelectTab?.("vlogs")}
                 className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
               >
                 Vlogs
-              </a>
-              <a
-                href="#software"
-                className="px-2 py-0.5 rounded hover:bg-slate-800 hover:text-white transition-colors"
-              >
-                Tools
               </a>
               <a
                 href="#contact"
@@ -421,7 +429,7 @@ export default function MacOSMenuBar({
                 <Film className="w-3.5 h-3.5 text-red-400 shrink-0" />
                 <div>
                   <div className="text-[10px] font-semibold text-white">Video Mode</div>
-                  <div className="text-[9px] text-slate-400">4K 60FPS Pro</div>
+                  <div className="text-[9px] text-slate-400">Professional Studio</div>
                 </div>
               </div>
 

@@ -26,14 +26,7 @@ export default function VideoStudioTimeline() {
       {/* Studio Header Toolbar */}
       <div className="px-3 py-2 bg-slate-950/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C8102E] animate-pulse"></span>
-            <span className="font-mono text-[10px] text-white font-semibold">
-              REC • 4K 60FPS
-            </span>
-          </div>
-
-          <div className="font-mono text-slate-400 text-[10px] sm:text-xs hidden xs:block">
+          <div className="font-mono text-slate-400 text-[10px] sm:text-xs">
             TC: <span className="text-white font-medium">00:02:44:18</span>
           </div>
         </div>
@@ -70,16 +63,6 @@ export default function VideoStudioTimeline() {
           >
             <SkipForward className="w-3.5 h-3.5" />
           </button>
-        </div>
-
-        {/* Badges */}
-        <div className="flex items-center gap-1.5 text-[10px]">
-          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
-            ProRes 422
-          </span>
-          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium hidden sm:inline">
-            GPU Active
-          </span>
         </div>
       </div>
 

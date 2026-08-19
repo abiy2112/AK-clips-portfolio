@@ -114,6 +114,7 @@ export default function App() {
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [activeVideoModalProject, setActiveVideoModalProject] = useState<ProjectItem | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getCreatorAuthStatus());
+  const [activeSection, setActiveSection] = useState<"projects" | "about" | "work" | "skills" | "reviews" | "vlogs">("projects");
 
   // Subscribe to custom projects from Firestore
   useEffect(() => {
@@ -341,6 +342,8 @@ export default function App() {
     <div className="min-h-screen bg-[#090D16] text-slate-100 font-sans selection:bg-[#C8102E]/30 selection:text-white relative overflow-x-hidden pb-20 sm:pb-24">
       {/* macOS Clean Top Menu Bar with Discreet Lightning Icon for Admin Access */}
       <MacOSMenuBar
+        activeSection={activeSection}
+        onSelectTab={setActiveSection}
         onOpenAdmin={handleOpenAdmin}
         rating={contentSettings.rating}
       />
@@ -403,6 +406,7 @@ export default function App() {
 
                 <a
                   href="#projects"
+                  onClick={() => setActiveSection("projects")}
                   className="w-full sm:w-auto px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer active:scale-98"
                 >
                   <Play className="w-3.5 h-3.5 text-slate-300 fill-slate-300" />
@@ -477,253 +481,255 @@ export default function App() {
             <div className="flex items-center justify-between mb-2 text-xs text-slate-400">
               <span className="font-medium flex items-center gap-1.5 text-slate-300">
                 <Sliders className="w-3.5 h-3.5 text-slate-400" />
-                Editing Suite & Timeline
+                Editing Suite
               </span>
-              <span className="text-[10px] font-mono">4K 60FPS</span>
             </div>
             <VideoStudioTimeline />
           </div>
         </MacOSWindow>
       </header>
 
-      {/* Featured Projects Section */}
-      <section id="projects" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
-              <Play className="w-4 h-4 fill-slate-200" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Featured <span className="text-cyan-400">Projects</span>
-            </h2>
-          </div>
-        </div>
-
-        {/* Infinite auto-scroll marquee component with responsive phone playback */}
-        <FeaturedProjectsMarquee
-          projects={projects}
-          onSelectProject={(p) => setActiveVideoModalProject(p)}
-          onDeleteProject={handleDeleteProject}
-        />
-      </section>
-
-      {/* About Me Section */}
-      <section className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
-          <MacOSWindow
-            title={`Inspector — About ${contentSettings.fullName}`}
-            icon={<Award className="w-3.5 h-3.5 text-red-400" />}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
-              <div className="md:col-span-3 flex justify-center">
-                <AKLogo size={85} rounded="2xl" />
-              </div>
-              <div className="md:col-span-9 space-y-2.5">
-                <h2 className="text-xl sm:text-2xl font-bold text-white">
-                  About <span className="text-cyan-400">{contentSettings.fullName} ({contentSettings.name})</span>
-                </h2>
-                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                  {contentSettings.aboutDescription1}
-                </p>
-                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                  {contentSettings.aboutDescription2}
-                </p>
-              </div>
-            </div>
-          </MacOSWindow>
-        </div>
-      </section>
-
-      {/* Skills Section */}
-      <section id="skills" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
-              <Code className="w-4 h-4" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Skills & <span className="text-cyan-400">Software</span>
-            </h2>
-          </div>
-          <p className="text-slate-400 text-xs">
-            Editing toolkits, motion software, and post-production proficiencies.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {skills.map((s, i) => (
-            <div
-              key={i}
-              className={`fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-${
-                i * 100
+      {/* ──────────── TAB BAR ──────────── */}
+      <div className="sticky top-10 sm:top-11 z-30 bg-[#090D16]/80 backdrop-blur-md border-b border-slate-800/60">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 flex items-center gap-0.5 overflow-x-auto scrollbar-hide py-1">
+          {([
+            { id: "projects", label: "Projects" },
+            { id: "about",    label: "About" },
+            { id: "work",     label: "Work" },
+            { id: "skills",   label: "Skills" },
+            { id: "reviews",  label: "Reviews" },
+            { id: "vlogs",    label: "Vlogs" },
+          ] as const).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSection(tab.id)}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeSection === tab.id
+                  ? "bg-[#C8102E] text-white"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 h-full flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-2xl">{s.icon}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[9px] font-medium text-slate-300">
-                      {s.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-white font-bold text-sm mb-1">{s.category}</h3>
-                  <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
-                    {s.desc}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ──────────── SECTION CONTENT (only active tab visible) ──────────── */}
+
+      {/* Featured Projects */}
+      {activeSection === "projects" && (
+        <section id="projects" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
+          <FeaturedProjectsMarquee
+            projects={projects}
+            onSelectProject={(p) => setActiveVideoModalProject(p)}
+            onDeleteProject={handleDeleteProject}
+          />
+        </section>
+      )}
+
+      {/* About */}
+      {activeSection === "about" && (
+        <section className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10 space-y-6">
+          <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
+            <MacOSWindow
+              title={`Inspector — About ${contentSettings.fullName}`}
+              icon={<Award className="w-3.5 h-3.5 text-red-400" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
+                <div className="md:col-span-3 flex justify-center">
+                  <AKLogo size={85} rounded="2xl" />
+                </div>
+                <div className="md:col-span-9 space-y-2.5">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">
+                    About <span className="text-cyan-400">{contentSettings.fullName} ({contentSettings.name})</span>
+                  </h2>
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    {contentSettings.aboutDescription1}
+                  </p>
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    {contentSettings.aboutDescription2}
                   </p>
                 </div>
-
-                <div className="pt-2.5 border-t border-slate-800 space-y-1">
-                  {s.tools.map((t, j) => (
-                    <div
-                      key={j}
-                      className="text-[11px] text-slate-300 flex items-center gap-1.5"
-                    >
-                      <span className="w-1 h-1 rounded-full bg-cyan-400"></span>
-                      <span>{t}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Work Experience Section */}
-      <section id="work" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
-              <Briefcase className="w-4 h-4" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Work <span className="text-cyan-400">Experience</span>
-            </h2>
+            </MacOSWindow>
           </div>
-          <p className="text-slate-400 text-xs">
-            Client projects, YouTube production, and commercial campaigns.
-          </p>
-        </div>
 
-        <div className="space-y-3.5 sm:space-y-4">
-          {experiences.map((exp, i) => (
-            <div
-              key={i}
-              className={`fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-${
-                i * 100
-              }`}
-            >
-              <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
-                <div className="flex flex-col md:flex-row gap-4 sm:gap-5 items-start justify-between">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base sm:text-lg font-bold text-white">{exp.title}</h3>
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-medium">
-                        {exp.tag}
+          {/* Education */}
+          <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">
+                Education &amp; <span className="text-cyan-400">Background</span>
+              </h2>
+            </div>
+
+            <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+              <h3 className="text-base font-bold text-white">
+                Information Systems Student
+              </h3>
+              <p className="text-xs font-semibold text-cyan-400 mb-1">
+                Addis Ababa University
+              </p>
+              <p className="text-xs text-slate-400">
+                Technical asset management, narrative pacing, and digital media workflows.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Skills */}
+      {activeSection === "skills" && (
+        <section id="skills" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
+          <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
+                <Code className="w-4 h-4" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                Skills &amp; <span className="text-cyan-400">Software</span>
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {skills.map((s, i) => (
+              <div
+                key={i}
+                className={`fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-${i * 100}`}
+              >
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 h-full flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-2xl">{s.icon}</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[9px] font-medium text-slate-300">
+                        {s.badge}
                       </span>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                      <span className="text-slate-200 font-medium">{exp.company}</span>
-                      <span>•</span>
-                      <span>{exp.location}</span>
-                      <span>•</span>
-                      <span className="font-mono text-[11px]">{exp.period}</span>
-                    </div>
-
-                    <ul className="space-y-1.5 pt-1">
-                      {exp.responsibilities.map((r, j) => (
-                        <li
-                          key={j}
-                          className="text-xs text-slate-300 flex items-start gap-2"
-                        >
-                          <ArrowRight className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
-                          <span>{r}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <h3 className="text-white font-bold text-sm mb-1">{s.category}</h3>
+                    <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{s.desc}</p>
                   </div>
-
-                  {/* Media Thumbnails */}
-                  {(exp.thumbnail || exp.isTikTok) && (
-                    <div className="shrink-0 flex gap-2 pt-1 md:pt-0">
-                      {exp.isTikTok ? (
-                        exp.links?.map((link, lIdx) => (
-                          <a
-                            key={lIdx}
-                            href={link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col items-center justify-center text-slate-300 hover:text-white hover:border-slate-500 transition-colors"
-                            title="Watch TikTok Video"
-                          >
-                            <Music className="w-4 h-4 text-pink-400 mb-0.5" />
-                            <span className="text-[8px] font-bold">Clip {lIdx + 1}</span>
-                          </a>
-                        ))
-                      ) : (
-                        <a
-                          href={exp.videoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-slate-700 overflow-hidden hover:opacity-90 transition-opacity"
-                        >
-                          <img
-                            src={exp.thumbnail}
-                            alt="Channel preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <Youtube className="w-5 h-5 text-red-500" />
-                          </div>
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <div className="pt-2.5 border-t border-slate-800 space-y-1">
+                    {s.tools.map((t, j) => (
+                      <div key={j} className="text-[11px] text-slate-300 flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-cyan-400"></span>
+                        <span>{t}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Work Experience */}
+      {activeSection === "work" && (
+        <section id="work" className="py-8 sm:py-12 px-3 sm:px-4 max-w-5xl mx-auto relative z-10">
+          <div className="fade-up opacity-0 translate-y-8 transition-all duration-700 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
+                <Briefcase className="w-4 h-4" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                Work <span className="text-cyan-400">Experience</span>
+              </h2>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Client Reviews Section (Fully Synced with Firestore & Real-Time) */}
-      <ClientReviews
-        reviews={reviews}
-        rating={contentSettings.rating}
-        isAdmin={isAuthenticated}
-        onAddReview={handleAddReview}
-        onDeleteReview={handleDeleteReview}
-      />
-
-      {/* Vlog Section — Firestore-backed, permanent */}
-      <VlogSection vlogs={vlogs} />
-
-      {/* Education */}
-      <section className="py-8 sm:py-10 px-3 sm:px-4 max-w-4xl mx-auto relative z-10">
-        <div className="fade-up opacity-0 translate-y-8 transition-all duration-700">
-          <div className="flex items-center gap-2.5 mb-3.5">
-            <div className="p-2 rounded-lg bg-slate-800 text-slate-200">
-              <GraduationCap className="w-4 h-4" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">
-              Education & <span className="text-cyan-400">Background</span>
-            </h2>
           </div>
 
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
-            <h3 className="text-base font-bold text-white">
-              Information Systems Student
-            </h3>
-            <p className="text-xs font-semibold text-cyan-400 mb-1">
-              Addis Ababa University
-            </p>
-            <p className="text-xs text-slate-400">
-              Technical asset management, narrative pacing, and digital media workflows.
-            </p>
+          <div className="space-y-3.5 sm:space-y-4">
+            {experiences.map((exp, i) => (
+              <div
+                key={i}
+                className={`fade-up opacity-0 translate-y-8 transition-all duration-700 animation-delay-${i * 100}`}
+              >
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 sm:p-5">
+                  <div className="flex flex-col md:flex-row gap-4 sm:gap-5 items-start justify-between">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-bold text-white">{exp.title}</h3>
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-medium">
+                          {exp.tag}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                        <span className="text-slate-200 font-medium">{exp.company}</span>
+                        <span>•</span>
+                        <span>{exp.location}</span>
+                        <span>•</span>
+                        <span className="font-mono text-[11px]">{exp.period}</span>
+                      </div>
+
+                      <ul className="space-y-1.5 pt-1">
+                        {exp.responsibilities.map((r, j) => (
+                          <li key={j} className="text-xs text-slate-300 flex items-start gap-2">
+                            <ArrowRight className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
+                            <span>{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {(exp.thumbnail || exp.isTikTok) && (
+                      <div className="shrink-0 flex gap-2 pt-1 md:pt-0">
+                        {exp.isTikTok ? (
+                          exp.links?.map((link, lIdx) => (
+                            <a
+                              key={lIdx}
+                              href={link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col items-center justify-center text-slate-300 hover:text-white hover:border-slate-500 transition-colors"
+                              title="Watch TikTok Video"
+                            >
+                              <Music className="w-4 h-4 text-pink-400 mb-0.5" />
+                              <span className="text-[8px] font-bold">Clip {lIdx + 1}</span>
+                            </a>
+                          ))
+                        ) : (
+                          <a
+                            href={exp.videoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-slate-700 overflow-hidden hover:opacity-90 transition-opacity"
+                          >
+                            <img src={exp.thumbnail} alt="Channel preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <Youtube className="w-5 h-5 text-red-500" />
+                            </div>
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Reviews */}
+      {activeSection === "reviews" && (
+        <ClientReviews
+          reviews={reviews}
+          rating={contentSettings.rating}
+          isAdmin={isAuthenticated}
+          onAddReview={handleAddReview}
+          onDeleteReview={handleDeleteReview}
+        />
+      )}
+
+      {/* Vlogs */}
+      {activeSection === "vlogs" && (
+        <VlogSection vlogs={vlogs} />
+      )}
+
 
       {/* Production Software & Creative Toolkit Marquee */}
       <div id="software">

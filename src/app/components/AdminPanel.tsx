@@ -152,11 +152,9 @@ export default function AdminPanel({
   // ----------------------------------------------------
   // VLOGS STATE
   // ----------------------------------------------------
-  const [vlogSubTab, setVlogSubTab] = useState<"upload" | "manage">("upload");
+  const [vlogSubTab, setVlogSubTab] = useState<"write" | "manage">("write");
   const [vlogTitle, setVlogTitle] = useState("");
-  const [vlogDescription, setVlogDescription] = useState("");
-  const [vlogVideoUrl, setVlogVideoUrl] = useState("");
-  const [vlogThumbnailUrl, setVlogThumbnailUrl] = useState("");
+  const [vlogContent, setVlogContent] = useState("");
   const [vlogTags, setVlogTags] = useState("");
   const [isSubmittingVlog, setIsSubmittingVlog] = useState(false);
   const [vlogSuccessMsg, setVlogSuccessMsg] = useState(false);
@@ -233,8 +231,13 @@ export default function AdminPanel({
   const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const objectUrl = URL.createObjectURL(file);
-    setProjectThumbnailUrl(objectUrl);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setProjectThumbnailUrl(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleResetProjectForm = () => {
@@ -264,7 +267,6 @@ export default function AdminPanel({
     }
 
     const finalCategory = customCategory.trim() || projectCategory;
-    const parsed = parseVideoSource(videoUrl);
 
     if (uploadMode === "link" && !videoUrl.trim()) {
       setProjectError("Please paste a valid video URL (YouTube, Google Drive, or MP4 link).");
@@ -280,7 +282,11 @@ export default function AdminPanel({
     const newProjectId = `cloud_${Date.now()}`;
 
     try {
-      let finalVideoUrl = videoUrl;
+      let finalVideoUrl = videoUrl.trim();
+      let projectType: ProjectItem["type"] = "direct";
+      let sourceLabel = "Video Link";
+      let finalEmbedUrl: string | undefined = undefined;
+      let finalThumb = projectThumbnailUrl.trim() || undefined;
 
       if (uploadMode === "file" && localFileBlob) {
         setUploadProgress(5);
@@ -289,28 +295,38 @@ export default function AdminPanel({
           localFileBlob,
           (progress) => setUploadProgress(progress)
         );
+        projectType = "direct";
+        sourceLabel = "Direct Video File";
+        finalEmbedUrl = finalVideoUrl;
+      } else {
+        const parsed = parseVideoSource(
+          videoUrl.trim(),
+          projectTitle.trim(),
+          finalCategory,
+          projectThumbnailUrl.trim() || undefined,
+          projectDuration.trim() || undefined
+        );
+        projectType = parsed.type;
+        sourceLabel = parsed.sourceLabel;
+        finalEmbedUrl = parsed.embedUrl;
+        finalThumb = projectThumbnailUrl.trim() || parsed.thumbnailUrl;
       }
 
       const newProject: ProjectItem = {
         id: newProjectId,
         title: projectTitle.trim(),
         category: finalCategory,
-        type: uploadMode === "file" ? "file" : parsed.type,
+        type: projectType,
         videoUrl: finalVideoUrl,
-        thumbnailUrl: projectThumbnailUrl.trim() || undefined,
+        embedUrl: finalEmbedUrl,
+        thumbnailUrl: finalThumb,
         duration: projectDuration.trim() || undefined,
-        sourceLabel:
-          uploadMode === "file"
-            ? "Direct Video File"
-            : parsed.type === "youtube"
-            ? "YouTube Cut"
-            : parsed.type === "googledrive"
-            ? "Google Drive"
-            : "Video Link",
+        sourceLabel: sourceLabel,
         isCustom: true,
         createdAt: Date.now(),
       };
 
+      await saveProjectToCloud(newProject);
       onAddProject(newProject);
 
       setIsProjectSuccess(true);
@@ -1078,15 +1094,15 @@ export default function AdminPanel({
             <div className="space-y-5">
               <div className="flex gap-2">
                 <button
-                  onClick={() => setVlogSubTab("upload")}
+                  onClick={() => setVlogSubTab("write")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                    vlogSubTab === "upload"
+                    vlogSubTab === "write"
                       ? "bg-slate-800 text-white border border-slate-700"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Vlog</span>
+                  <span>Write New</span>
                 </button>
                 <button
                   onClick={() => setVlogSubTab("manage")}
@@ -1101,18 +1117,18 @@ export default function AdminPanel({
                 </button>
               </div>
 
-              {vlogSubTab === "upload" ? (
+              {vlogSubTab === "write" ? (
                 <form
                   className="space-y-4 max-w-2xl mx-auto"
                   onSubmit={async (e) => {
                     e.preventDefault();
                     setVlogErrorMsg("");
                     if (!vlogTitle.trim()) {
-                      setVlogErrorMsg("Please enter a title.");
+                      setVlogErrorMsg("Please enter a title for your vlog.");
                       return;
                     }
-                    if (!vlogVideoUrl.trim()) {
-                      setVlogErrorMsg("Please enter a video URL.");
+                    if (!vlogContent.trim()) {
+                      setVlogErrorMsg("Please enter your vlog text content.");
                       return;
                     }
                     setIsSubmittingVlog(true);
@@ -1120,21 +1136,24 @@ export default function AdminPanel({
                       const newVlog: VlogItem = {
                         id: `vlog_${Date.now()}`,
                         title: vlogTitle.trim(),
-                        description: vlogDescription.trim(),
-                        videoUrl: vlogVideoUrl.trim(),
-                        thumbnailUrl: vlogThumbnailUrl.trim() || undefined,
-                        date: new Date().toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }),
-                        tags: vlogTags.split(",").map((t) => t.trim()).filter(Boolean),
+                        content: vlogContent.trim(),
+                        date: new Date().toLocaleDateString([], {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }),
+                        tags: vlogTags
+                          .split(",")
+                          .map((t) => t.trim())
+                          .filter(Boolean),
                         isCustom: true,
                         createdAt: Date.now(),
                       };
-                      onAddVlog?.(newVlog);
                       await saveVlogToCloud(newVlog);
+                      onAddVlog?.(newVlog);
                       setVlogSuccessMsg(true);
                       setVlogTitle("");
-                      setVlogDescription("");
-                      setVlogVideoUrl("");
-                      setVlogThumbnailUrl("");
+                      setVlogContent("");
                       setVlogTags("");
                       setTimeout(() => {
                         setVlogSuccessMsg(false);
@@ -1148,60 +1167,42 @@ export default function AdminPanel({
                   }}
                 >
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-300">Vlog Title *</label>
+                    <label className="block text-xs font-medium text-slate-300">
+                      Vlog Title *
+                    </label>
                     <input
                       type="text"
                       value={vlogTitle}
                       onChange={(e) => setVlogTitle(e.target.value)}
-                      placeholder="e.g. Behind the Scenes — MUSIKANA Recording Session"
+                      placeholder="e.g. My thoughts on pacing & color grading"
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-300">Short Description</label>
+                    <label className="block text-xs font-medium text-slate-300">
+                      Content * <span className="text-slate-500">(plain text notes, reflections, or blog post)</span>
+                    </label>
                     <textarea
-                      rows={2}
-                      value={vlogDescription}
-                      onChange={(e) => setVlogDescription(e.target.value)}
-                      placeholder="A brief summary of what this vlog is about..."
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                      rows={8}
+                      value={vlogContent}
+                      onChange={(e) => setVlogContent(e.target.value)}
+                      placeholder="Write your story, thoughts, or behind-the-scenes insights here..."
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E] resize-y"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-slate-300">Video URL * <span className="text-slate-500">(YouTube, Drive, or direct MP4)</span></label>
+                    <label className="block text-xs font-medium text-slate-300">
+                      Tags <span className="text-slate-500">(comma separated, optional)</span>
+                    </label>
                     <input
-                      type="url"
-                      value={vlogVideoUrl}
-                      onChange={(e) => setVlogVideoUrl(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=..."
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
+                      type="text"
+                      value={vlogTags}
+                      onChange={(e) => setVlogTags(e.target.value)}
+                      placeholder="BTS, Editing, Color Grading, Storytelling"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-300">Thumbnail URL <span className="text-slate-500">(optional)</span></label>
-                      <input
-                        type="text"
-                        value={vlogThumbnailUrl}
-                        onChange={(e) => setVlogThumbnailUrl(e.target.value)}
-                        placeholder="https://... (auto-generated for YouTube)"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="block text-xs font-medium text-slate-300">Tags <span className="text-slate-500">(comma separated)</span></label>
-                      <input
-                        type="text"
-                        value={vlogTags}
-                        onChange={(e) => setVlogTags(e.target.value)}
-                        placeholder="BTS, Music, Editing"
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-base sm:text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#C8102E]"
-                      />
-                    </div>
                   </div>
 
                   {vlogErrorMsg && (
@@ -1214,7 +1215,7 @@ export default function AdminPanel({
                   {vlogSuccessMsg && (
                     <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                      <span>Vlog published to Cloud database!</span>
+                      <span>Vlog published to database!</span>
                     </div>
                   )}
 
@@ -1224,9 +1225,15 @@ export default function AdminPanel({
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-[#C8102E] to-[#9f0a22] hover:from-[#d91233] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 active:scale-98 flex items-center justify-center gap-2"
                   >
                     {isSubmittingVlog ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></>
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
                     ) : (
-                      <><Zap className="w-3.5 h-3.5 fill-current text-amber-300" /><span>Publish Vlog</span></>
+                      <>
+                        <Zap className="w-3.5 h-3.5 fill-current text-amber-300" />
+                        <span>Publish Vlog</span>
+                      </>
                     )}
                   </button>
                 </form>
@@ -1234,33 +1241,44 @@ export default function AdminPanel({
                 /* Manage Vlogs */
                 <div className="space-y-3">
                   {vlogs.length === 0 ? (
-                    <div className="py-10 text-center text-xs text-slate-500">No vlogs yet. Add your first one!</div>
+                    <div className="py-10 text-center text-xs text-slate-500">
+                      No vlogs yet. Write your first post!
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
                       {vlogs.map((vlog) => (
                         <div
                           key={vlog.id}
-                          className="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-3"
+                          className="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2"
                         >
-                          <div className="space-y-1.5">
-                            <div className="text-xs font-bold text-white truncate">{vlog.title}</div>
-                            {vlog.description && (
-                              <div className="text-[10px] text-slate-400 line-clamp-2">{vlog.description}</div>
-                            )}
-                            <div className="text-[10px] text-slate-500 truncate">{vlog.videoUrl}</div>
-                            {vlog.tags && vlog.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {vlog.tags.map((tag) => (
-                                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{tag}</span>
-                                ))}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 space-y-1">
+                              <div className="text-xs font-bold text-white">
+                                {vlog.title}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
-                            <span className="text-[10px] text-slate-500">{vlog.date}</span>
+                              <div className="text-[11px] text-slate-400 line-clamp-2">
+                                {vlog.content}
+                              </div>
+                              {vlog.tags && vlog.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                  {vlog.tags.map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                             <button
                               onClick={async () => {
-                                if (window.confirm("Delete this vlog permanently?")) {
+                                if (
+                                  window.confirm(
+                                    "Delete this vlog permanently?"
+                                  )
+                                ) {
                                   try {
                                     onDeleteVlog?.(vlog.id);
                                     await deleteVlogFromCloud(vlog.id);
@@ -1269,10 +1287,13 @@ export default function AdminPanel({
                                   }
                                 }
                               }}
-                              className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-400 hover:text-white transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-400 hover:text-white transition-colors cursor-pointer shrink-0"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                          </div>
+                          <div className="text-[10px] text-slate-500 border-t border-slate-800/60 pt-1.5">
+                            {vlog.date}
                           </div>
                         </div>
                       ))}
